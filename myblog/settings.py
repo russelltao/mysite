@@ -28,15 +28,28 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+TEMPLATE_DIRS=[  
+        os.path.join(BASE_DIR,'templates'),  
+        ]  
+  
+# Application definition  
+  
+INSTALLED_APPS = (  
+    'django.contrib.admin',  
+    'django.contrib.auth',  
+    'django.contrib.contenttypes',  
+    'django.contrib.sessions',  
+    'django.contrib.messages',  
+    'django.contrib.staticfiles',  
+    'file_picker',  
+    'file_picker.uploads',  
+    'file_picker.wymeditor',  
+    'bootstrap_toolkit',  
+    'blog',  
+    'django.contrib.admin',  
+)  
 
-INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-)
+
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -57,8 +70,12 @@ WSGI_APPLICATION = 'myblog.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'blog', 
+        'USER': 'root', # Not used with sqlite3.
+        'PASSWORD': 'iamtaohui', # Not used with sqlite3.
+        'HOST': '', # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '', # Set to empty string for default. Not used with sqlite3.
     }
 }
 
