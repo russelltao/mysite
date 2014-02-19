@@ -1,0 +1,13 @@
+Django
+gunicorn
+supervisor
+mysql-python
+django-bootstrap3
+Pygments
+PIL --allow-external PIL --allow-unverified PIL
+python-memcached
+docutils
+django-pingback
+django-xmlrpc==0.1.4
+BeautifulSoup
+-e git+https://github.com/duoshuo/duoshuo-python-sdk.git#egg=duoshuo-python-sdk

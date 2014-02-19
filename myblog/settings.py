@@ -10,12 +10,17 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from os import path
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-
+ROOT_PATH = path.abspath(path.join(path.dirname('settings.py'), path.pardir))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
-
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    #'django.contrib.staticfiles.finders.DefaultStorageFinder',
+)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'zs$3j9ydzu(zf)sflvseitey+=tmauh15*ekq1gta=!^_d%a60'
 
@@ -29,9 +34,13 @@ ALLOWED_HOSTS = []
 
 # Application definition
 TEMPLATE_DIRS=[  
-        os.path.join(BASE_DIR,'templates'),  
+        os.path.join(BASE_DIR,'myblog/blog/templates'),  
         ]  
-  
+
+DIRECTORY_URLS = (
+    'http://ping.blogs.yandex.ru/RPC2',
+    'http://rpc.technorati.com/rpc/ping',
+)
 # Application definition  
   
 INSTALLED_APPS = (  
@@ -44,9 +53,10 @@ INSTALLED_APPS = (
     'file_picker',  
     'file_picker.uploads',  
     'file_picker.wymeditor',  
-    'bootstrap_toolkit',  
-    'blog',  
+    'bootstrap3',
+    'myblog.blog',  
     'django.contrib.admin',  
+    'duoshuo',
 )  
 
 
@@ -58,13 +68,15 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'pingback.middleware.PingbackMiddleware',
+    'myblog.blog.middleware.OnlineMiddleware',
 )
 
 ROOT_URLCONF = 'myblog.urls'
 
 WSGI_APPLICATION = 'myblog.wsgi.application'
 
-
+LOG_FILE = '/mnt/myblog/logs/all.log'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
@@ -77,6 +89,83 @@ DATABASES = {
         'HOST': '', # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '', # Set to empty string for default. Not used with sqlite3.
     }
+}
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'formatters': {
+        'simple': {
+            'format': '[%(levelname)s] %(module)s : %(message)s'
+        },
+        'verbose': {
+            'format': '[%(asctime)s] [%(levelname)s] %(module)s : %(message)s'
+        }
+    },
+
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'django.utils.log.NullHandler',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': LOG_FILE,
+            'mode': 'a',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false']
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['mail_admins', 'console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 60,
+        'options': {
+            'MAX_ENTRIES': 1024,
+        }
+    },
+    'memcache': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': 'unix:/mnt/memcached.sock',
+        'TIMEOUT': 60,
+        'options': {
+            'MAX_ENTRIES': 1024,
+        }
+    },
 }
 
 # Internationalization
@@ -94,6 +183,30 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.6/howto/static-files/
-
 STATIC_URL = '/static/'
+
+# https://docs.djangoproject.com/en/1.6/howto/static-files/
+# Additional locations of static files  
+HERE = os.path.dirname(__file__)  
+STATICFILES_DIRS = (  
+    # Put strings here, like "/home/html/static" or "C:/www/django/static".  
+    # Always use forward slashes, even on Windows.  
+    # Don't forget to use absolute paths, not relative paths.  
+    HERE+STATIC_URL,  
+)  
+
+PAGE_NUM = 10
+RECENTLY_NUM = 15
+HOT_NUM = 15
+ONE_DAY = 24*60*60
+FIF_MIN = 15 * 60
+FIVE_MIN = 5 * 60
+
+
+DUOSHUO_SECRET = 'secret'
+DUOSHUO_SHORT_NAME = 'taohui'
+
+DOMAIN = 'http://115.28.146.228:8080'
+DB_NAME = 'blog'
+DB_USER = 'root'
+DB_PWD = 'iamtaohui'
