@@ -30,6 +30,8 @@ class PostAdmin(admin.ModelAdmin):
         print "save user",obj.author
         if not obj.summary:
             obj.summary = obj.content
+
+        
         if not obj.is_old:
             print "ready to convert rst to html"
             #print "1:",obj.content

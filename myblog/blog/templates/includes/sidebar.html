@@ -1,42 +1,51 @@
 <div class="widget">
     {% for widget in widgets %}
+    <div class="panel panel-default">
     {% if widget.content == 'recently_post'%}
-    <h3 class="under_line">{{ widget.title }}</h3>
-    <div class="textwidget">
-        <ul>
-        {% with r_posts=recently_posts %}
-        {% if r_posts %}
-        {% for post in r_posts %}
-        <li>
-        <a rel="bookmark" href="/{{ post.alias }}.html" title="详细阅读 {{ post.title }}">{{ post.title }}</a>
-        </li>            
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-        </ul>
+    
+	    <div class="panel-heading"><h3 class="panel-title">{{ widget.title }}</h3></div>
+	    <div class="panel-body">
+		    <div class="textwidget">
+		        <ul class="list-unstyled">
+		        {% with r_posts=recently_posts %}
+		        {% if r_posts %}
+		        {% for post in r_posts %}
+		        <li>
+		        <a rel="bookmark" href="/{{ post.alias }}.html" title="详细阅读 {{ post.title }}">{{ post.title }}</a>
+		        </li>            
+		        {% endfor %}
+		        {% endif %}
+		        {% endwith %}
+		        </ul>
+		    </div>
+		</div>
+	{% else %}{% if widget.content == 'hot_post' %}
+	    <div class="panel-heading"><h3 class="panel-title">{{ widget.title }}</h3></div>
+	    <div class="panel-body">
+		    <div class="textwidget">
+		        <ul class="list-unstyled">
+	        {% with h_posts=hot_posts %}
+	        {% if h_posts %}
+	        {% for post in h_posts %}
+		        <li>
+		        <a rel="bookmark" href="/{{ post.alias }}.html" title="详细阅读 {{ post.title }}">{{ post.title }}</a>
+		        </li>            
+	        {% endfor %}
+	        {% endif %}
+	        {% endwith %}
+		        </ul>
+		    </div>
+	{% else %}
+		<div class="panel-heading"><h3 class="panel-title">{{ widget.title }}</h3></div>
+		<div class="panel-body">
+		    <div class="textwidget">
+		        {% autoescape off %}
+		        {{ widget.content }}
+		        {% endautoescape %}
+		    </div>
+	    </div>
+	    {% endif %}
+	{% endif %}
     </div>
-    {% else %}{% if widget.content == 'hot_post' %}
-    <h3 class="under_line">{{ widget.title }}</h3>
-    <div class="textwidget">
-        <ul>
-        {% with h_posts=hot_posts %}
-        {% if h_posts %}
-        {% for post in h_posts %}
-        <li>
-        <a rel="bookmark" href="/{{ post.alias }}.html" title="详细阅读 {{ post.title }}">{{ post.title }}</a>
-        </li>            
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-        </ul>
-    </div>
-    {% else %}
-    <h3 class="under_line">{{ widget.title }}</h3>
-    <div class="textwidget">
-        {% autoescape off %}
-        {{ widget.content }}
-        {% endautoescape %}
-    </div>
-    {% endif %}{% endif %}
     {% endfor %}
 </div>

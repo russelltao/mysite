@@ -5,3 +5,4 @@ encoding//myblog/blog/models.py=utf-8
 encoding//myblog/blog/templatetags/substring.py=utf-8
 encoding//myblog/blog/views.py=utf-8
 encoding//myblog/utils/cache.py=utf-8
+encoding//myblog/utils/profiler.py=utf-8

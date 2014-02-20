@@ -59,8 +59,6 @@ INSTALLED_APPS = (
     'duoshuo',
 )  
 
-
-
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -195,7 +193,7 @@ STATICFILES_DIRS = (
     HERE+STATIC_URL,  
 )  
 
-PAGE_NUM = 10
+PAGE_NUM = 5
 RECENTLY_NUM = 15
 HOT_NUM = 15
 ONE_DAY = 24*60*60
@@ -203,7 +201,7 @@ FIF_MIN = 15 * 60
 FIVE_MIN = 5 * 60
 
 
-DUOSHUO_SECRET = 'secret'
+DUOSHUO_SECRET = 'bfd5ce8cc34ab82ad96ae6ade39f81a8'
 DUOSHUO_SHORT_NAME = 'taohui'
 
 DOMAIN = 'http://115.28.146.228:8080'

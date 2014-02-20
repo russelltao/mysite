@@ -2,11 +2,14 @@
 import logging
 from django.shortcuts import render,get_object_or_404  
 from django.template.response import TemplateResponse  
-from myblog.blog.models import Post,Page,Category
+from myblog.blog.models import Post,Page,Category,Widget
 from django.views.generic import ListView, DetailView
 from myblog.utils.cache import LRUCacheDict, cache
-from myblog.settings import PAGE_NUM, RECENTLY_NUM, HOT_NUM, FIF_MIN
+from myblog.settings import PAGE_NUM, RECENTLY_NUM, HOT_NUM, FIF_MIN,DUOSHUO_SHORT_NAME,DUOSHUO_SECRET
 from django.core.paginator import Paginator
+from django.db.models import Q
+#from duoshuo import DuoshuoAPI
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +20,7 @@ class BaseMixin(object):
         context = super(BaseMixin, self).get_context_data(**kwargs)
         try:
             context['categories'] = Category.available_list()
-            #context['widgets'] = Widget.available_list()
+            context['widgets'] = Widget.available_list()
             context['recently_posts'] = Post.get_recently_posts(RECENTLY_NUM)
             context['hot_posts'] = Post.get_hots_posts(HOT_NUM)
             context['pages'] = Page.objects.filter(status=0)
