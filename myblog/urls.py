@@ -8,11 +8,16 @@ from django.contrib.sitemaps import views as sitemap_views
 from sitemap import PostSitemap
 from feeds import LatestEntriesFeed
 
+from django.views.generic import TemplateView
+
 admin.autodiscover()  
   
 
 urlpatterns = patterns('',  
+    
     url(r'^$', IndexView.as_view(), name='home'),
+    url(r'^test/code', TemplateView.as_view(template_name='code.html')),
+    
     url(r'^feed|rss/$', LatestEntriesFeed()),
     
     url(r'^admin/', include(admin.site.urls), name='admin'),  

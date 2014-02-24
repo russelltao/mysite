@@ -49,14 +49,12 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',  
     'django.contrib.sessions',  
     'django.contrib.messages',  
-    'django.contrib.staticfiles',  
-    'file_picker',  
-    'file_picker.uploads',  
-    'file_picker.wymeditor',  
+    'django.contrib.staticfiles',    
     'bootstrap3',
     'myblog.blog',  
     'django.contrib.admin',  
     'duoshuo',
+    'rstify',
 )  
 
 MIDDLEWARE_CLASSES = (
@@ -193,7 +191,7 @@ STATICFILES_DIRS = (
     HERE+STATIC_URL,  
 )  
 
-PAGE_NUM = 5
+PAGE_NUM = 10
 RECENTLY_NUM = 15
 HOT_NUM = 15
 ONE_DAY = 24*60*60

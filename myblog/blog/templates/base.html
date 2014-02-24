@@ -9,24 +9,33 @@
         <meta name="author" content="陶辉">
         <meta name="baidu-site-verification" content="L1tGNksWV2rt8zho" />
         <meta name="google-site-verification" content="DBmuxv3lJezFBdzrzoueLXVbY6gJ6cdbR1mroGVRiNQ" />
-        <link rel="pingback" href="/xmlrpc/" />
-        <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
-
+        <link rel="pingback" href="http://www.the5fire.com/xmlrpc/" />
+        <link rel="shortcut icon" href="http://www.the5fire.com/static/favicon.ico" type="image/x-icon" />
+		
         {% load bootstrap3 %}
         {# Load CSS and JavaScript #}
     	{% bootstrap_css %}
-
 		<style>
-	      body {
-	        padding-top: 50px; 
-	      }
-	      
-	      .container {
+			body {
+			  padding-top: 50px; 
+			}
+			.nav-tabs {  
+			    background-color: #ADD8E6;  
+			}  
+			.navbar {  
+			    background-color: #87CEEB;  
+			}  
+			h1 {  
+			    color: #87CEEB;  
+			} 
+			.container {
 			  margin-left: auto;
 			  margin-right: auto;
 			  *zoom: 1;
 			}
+			
 	    </style>
+	    <link href="http://www.the5fire.com/static/blog/css/code.css" rel="stylesheet" type="text/css">
     </head>
     
     <body><div class="container">
@@ -48,7 +57,7 @@
 		    <ul class="nav navbar-nav">
 		
 		       <li class="active">
-		           <a href="/">首页</a>
+		           <a href="/">博客</a>
 		       </li>
 		           {% for page in pages %}
 		       <li class="">
@@ -86,17 +95,20 @@
 <div class="row">
 	<div id="main" class="col-md-9">
 		<div class="panel panel-default">
-
 			    <ul class="nav nav-tabs">
-	                  {% for category in categories %}
+	                  {% for isActive,link,category in categories %}
 	                  {% if category.is_nav %}
-	                  <li class="active"><a href="/category/{{ category.alias }}/">{{ category.name }}</a></li>
+	                  
+	                  {% if isActive %}
+	                  <li class="active"><a href="{{ link }}">{{ category.name }}</a></li>
+	                  {% else %}
+	                  <li><a href="{{ link }}">{{ category.name }}</a></li>
+	                  {% endif %}
+	                   
 	                  {% endif %}
 	                  {% endfor %}
 	             </ul>
 
-           
-           
 			<div class="panel-body">
                    {% block main %}{% endblock %}
              </div>
@@ -110,9 +122,9 @@
             <div class="">
                 其他分类：
                 <ul class="nav nav-pills">
-                    {% for category in categories %}
+                    {% for isActive,link,category in categories %}
                     {% if not category.is_nav %}
-                    <li><a href="/category/{{ category.alias }}/">{{ category.name }}</a></li>
+                    <li><a href="{{ link }}">{{ category.name }}</a></li>
                     {% endif %}
                     {% endfor %}
                 </ul>

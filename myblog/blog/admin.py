@@ -3,7 +3,7 @@ from django.contrib import admin
 #from django.contrib.markup.templatetags.markup import restructuredtext
 from rstify import rstify
 from .models import Post,Category,Page,Widget
-
+import docutils.parsers.rst
 from django.contrib import admin  
   
 from django.db.models import TextField  

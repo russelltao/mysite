@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from myblog.blog.models import Post,Page,Category,Widget
 from django.views.generic import ListView, DetailView
 from myblog.utils.cache import LRUCacheDict, cache
-from myblog.settings import PAGE_NUM, RECENTLY_NUM, HOT_NUM, FIF_MIN,DUOSHUO_SHORT_NAME,DUOSHUO_SECRET
+from myblog.settings import PAGE_NUM, RECENTLY_NUM, HOT_NUM, FIF_MIN
 from django.core.paginator import Paginator
 from django.db.models import Q
 #from duoshuo import DuoshuoAPI
@@ -19,13 +19,23 @@ class BaseMixin(object):
     def get_context_data(self, *args, **kwargs):
         context = super(BaseMixin, self).get_context_data(**kwargs)
         try:
-            context['categories'] = Category.available_list()
+            context['categories'] = [[True, "/",{"name":"首页","alias":"","is_nav":True}]]
+                    
+            #logger.info(context['categories'])
             context['widgets'] = Widget.available_list()
             context['recently_posts'] = Post.get_recently_posts(RECENTLY_NUM)
             context['hot_posts'] = Post.get_hots_posts(HOT_NUM)
             context['pages'] = Page.objects.filter(status=0)
-            print "online ips",cache.get('online_ips')
+            #print "online ips",cache.get('online_ips')
             context['online_num'] = len(cache.get('online_ips'))
+            
+            for i in Category.available_list():
+                logger.info("alias=%s,cur=%s"%(i.alias,self.curCategory))
+                if i.alias == self.curCategory:
+                    context['categories'][0][0] = False
+                    context['categories'].append([True, "/category/%s/"%(i.alias), i])
+                else:
+                    context['categories'].append([False, "/category/%s/"%(i.alias), i])
         except Exception as e:
             logger.exception(u'加载基本信息出错[%s]！', e)
 
@@ -47,6 +57,8 @@ class PostDetailView(BaseMixin, DetailView):
 
         alias = self.kwargs.get('slug')
         visited_ips = cache.get(alias, [])
+        
+        logger.info("PostDetailView get "+alias)
 
         if ip not in visited_ips:
             try:
@@ -63,6 +75,10 @@ class PostDetailView(BaseMixin, DetailView):
                 self.set_lru_read(ip, post)
 
             cache.set(alias, visited_ips, FIF_MIN)
+            cache.set("postCategory_"+alias, post.category.alias, FIF_MIN)
+            self.curCategory = post.category.alias
+        else:
+            self.curCategory = cache.get("postCategory_"+alias)
 
         return super(PostDetailView, self).get(request, *args, **kwargs)
 
@@ -126,7 +142,10 @@ class IndexView(BaseMixin, ListView):
 
     def get_queryset(self):
         self.query = self.request.GET.get('s')
+        self.curCategory = "allnew"
+        logger.info("IndexView get_queryset")
         if self.query:
+            
             qset = (
                 Q(title__icontains=self.query) |
                 Q(content__icontains=self.query)
@@ -142,7 +161,27 @@ class IndexView(BaseMixin, ListView):
 
         return posts
 
+class CategoryListView(IndexView):
+    def get_queryset(self):
+        alias = self.kwargs.get('alias')
 
+        try:
+            self.category = Category.objects.get(alias=alias)
+            self.curCategory = alias
+            logger.info("get_queryset "+alias)
+        except Category.DoesNotExist:
+            return []
+
+        posts = self.category.post_set.defer('content', 'content_html').filter(status=0)
+        return posts
+
+    def get_context_data(self, **kwargs):
+        if hasattr(self, 'category'):
+            kwargs['title'] = self.category.name + ' | '
+            logger.info("test "+kwargs['title'])
+
+        return super(CategoryListView, self).get_context_data(**kwargs)
+    
 class TagsListView(IndexView):
     def get_queryset(self):
         self.tag = self.kwargs.get('tag')
@@ -173,20 +212,5 @@ class PageDetailView(BaseMixin, DetailView):
         return self.render_to_response(context)
     
     
-class CategoryListView(IndexView):
-    def get_queryset(self):
-        alias = self.kwargs.get('alias')
 
-        try:
-            self.category = Category.objects.get(alias=alias)
-        except Category.DoesNotExist:
-            return []
-
-        posts = self.category.post_set.defer('content', 'content_html').filter(status=0)
-        return posts
-
-    def get_context_data(self, **kwargs):
-        if hasattr(self, 'category'):
-            kwargs['title'] = self.category.name + ' | '
-
-        return super(CategoryListView, self).get_context_data(**kwargs)
+    

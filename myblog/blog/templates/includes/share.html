@@ -9,7 +9,23 @@
             <li><a target="blank" href="http://share.baidu.com/s?type=text&amp;searchPic=0&amp;sign=on&amp;to=renren&amp;url={{ post.get_absolute_url }}&amp;title={{ post.title }}">人人网</a></li>
             <li><a target="blank" href="http://share.baidu.com/s?type=text&amp;searchPic=0&amp;sign=on&amp;to=qzone&amp;url={{ post.get_absolute_url }}&amp;title={{ post.title }}">QQ空间</a></li>
             <li class="divider"></li>
-            <li><a href="mailto:?subject=[the5fire]好文分享：{{ post.title }}&amp;body={{ post.get_absolute_url }}">E-Mail</a></li>
+            <li><a href="mailto:?subject=[陶辉笔记]好文分享：{{ post.title }}&amp;body={{ post.get_absolute_url }}">E-Mail</a></li>
         </ul>
     </div>
+    
+	<div class="btn-group span3 pull-right">
+	  <button "type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+	    Action <span class="caret"></span>
+	  </button>
+	  <ul class="dropdown-menu" role="menu">
+            <li><a target="blank" href="http://share.baidu.com/s?type=text&amp;searchPic=0&amp;sign=on&amp;to=tsina&amp;url={{ post.get_absolute_url }}&amp;title={{ post.title }}">新浪微博</a></li>
+            <li><a target="blank" href="http://share.baidu.com/s?type=text&amp;searchPic=0&amp;sign=on&amp;to=tqq&amp;url={{ post.get_absolute_url }}&amp;title={{ post.title }}">腾讯微博</a></li>
+            <li><a target="blank" href="http://s.evernote.com/grclip?url={{ post.get_absolute_url }}&amp;title={{ post.title }}">印象笔记</a></li>
+            <li><a target="blank" href="http://share.baidu.com/s?type=text&amp;searchPic=0&amp;sign=on&amp;to=douban&amp;url={{ post.get_absolute_url }}&amp;title={{ post.title }}">豆瓣</a></li>
+            <li><a target="blank" href="http://share.baidu.com/s?type=text&amp;searchPic=0&amp;sign=on&amp;to=renren&amp;url={{ post.get_absolute_url }}&amp;title={{ post.title }}">人人网</a></li>
+            <li><a target="blank" href="http://share.baidu.com/s?type=text&amp;searchPic=0&amp;sign=on&amp;to=qzone&amp;url={{ post.get_absolute_url }}&amp;title={{ post.title }}">QQ空间</a></li>
+            <li class="divider"></li>
+            <li><a href="mailto:?subject=[陶辉笔记]好文分享：{{ post.title }}&amp;body={{ post.get_absolute_url }}">E-Mail</a></li>
+	  </ul>
+	</div>
 </div>

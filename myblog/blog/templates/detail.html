@@ -6,15 +6,11 @@
 {% block keywords %}{{ post.tags }}{% endblock %}
 
 {% block extend_style %} 
-<link href="/static/blog/css/code.css" rel="stylesheet" type="text/css" media="screen" />
-<script src="/static/blog/js/jquery-1.8.1.min.js"></script>
-<script src="/static/bootstrap/js/bootstrap-dropdown.js"></script>
-<script>
-    $('.dropdown-toggle').dropdown()
-</script>
+<link href="/CSS/code.css" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block main %}
+{% load rstify_tags %}
 <div class="detail">
     <h2 class="under_line">
         {% autoescape off %}
@@ -32,13 +28,13 @@
         <a href="/tag/{{ tag }}" rel="tag">{{ tag }}</a>&nbsp;
         {% endfor %}
         | 阅读 {{ post.view_times }}  次
-        | 发布：{{ post.pub_time|date:"Y-m-d P" }}
+        | 发布：{{ post.pub_time|date:"Y年m月d日 P" }}
         {% if user.is_authenticated %}
             <a href="/admin/blog/post/{{post.id}}/" target="_blank">edit</a>
         {% endif %}
     </div>
 
-    {% include 'includes/share.html' %}
+    {#% include 'includes/share.html' %#}
     
     <div class="clear"></div>
 
@@ -47,9 +43,15 @@
         {{ post.content_html }}
         {% endautoescape %}
     </div>
+    <p>（全文完）</p>
+    <div style="text-align:center;color:red;">
+    <p>（转载本站文章请注明作者和出处 <a href="http://taohui.org.cn">陶辉 taohui.org.cn</a>）</p></div>
 
-    {% include 'includes/share.html' %}
-
+    {#% include 'includes/share.html' %#}
+        <p class="pay">
+        此文对我有价值，小额(无负担)赞助下^_^
+        <a href="https://me.alipay.com/russelltao" class="btn btn-primary" target="_blank">支付宝打赏</a>
+        </p>
     <div class="clear box"></div>
 
     <div class="box">
