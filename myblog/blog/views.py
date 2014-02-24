@@ -30,7 +30,7 @@ class BaseMixin(object):
             context['online_num'] = len(cache.get('online_ips'))
             
             for i in Category.available_list():
-                logger.info("alias=%s,cur=%s"%(i.alias,self.curCategory))
+
                 if i.alias == self.curCategory:
                     context['categories'][0][0] = False
                     context['categories'].append([True, "/category/%s/"%(i.alias), i])
@@ -57,8 +57,6 @@ class PostDetailView(BaseMixin, DetailView):
 
         alias = self.kwargs.get('slug')
         visited_ips = cache.get(alias, [])
-        
-        logger.info("PostDetailView get "+alias)
 
         if ip not in visited_ips:
             try:
@@ -143,7 +141,7 @@ class IndexView(BaseMixin, ListView):
     def get_queryset(self):
         self.query = self.request.GET.get('s')
         self.curCategory = "allnew"
-        logger.info("IndexView get_queryset")
+
         if self.query:
             
             qset = (
@@ -168,7 +166,6 @@ class CategoryListView(IndexView):
         try:
             self.category = Category.objects.get(alias=alias)
             self.curCategory = alias
-            logger.info("get_queryset "+alias)
         except Category.DoesNotExist:
             return []
 
@@ -178,7 +175,6 @@ class CategoryListView(IndexView):
     def get_context_data(self, **kwargs):
         if hasattr(self, 'category'):
             kwargs['title'] = self.category.name + ' | '
-            logger.info("test "+kwargs['title'])
 
         return super(CategoryListView, self).get_context_data(**kwargs)
     

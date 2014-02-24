@@ -9,33 +9,14 @@
         <meta name="author" content="陶辉">
         <meta name="baidu-site-verification" content="L1tGNksWV2rt8zho" />
         <meta name="google-site-verification" content="DBmuxv3lJezFBdzrzoueLXVbY6gJ6cdbR1mroGVRiNQ" />
-        <link rel="pingback" href="http://www.the5fire.com/xmlrpc/" />
-        <link rel="shortcut icon" href="http://www.the5fire.com/static/favicon.ico" type="image/x-icon" />
+        <link rel="pingback" href="/xmlrpc/" />
+        <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
 		
         {% load bootstrap3 %}
         {# Load CSS and JavaScript #}
     	{% bootstrap_css %}
-		<style>
-			body {
-			  padding-top: 50px; 
-			}
-			.nav-tabs {  
-			    background-color: #ADD8E6;  
-			}  
-			.navbar {  
-			    background-color: #87CEEB;  
-			}  
-			h1 {  
-			    color: #87CEEB;  
-			} 
-			.container {
-			  margin-left: auto;
-			  margin-right: auto;
-			  *zoom: 1;
-			}
-			
-	    </style>
-	    <link href="http://www.the5fire.com/static/blog/css/code.css" rel="stylesheet" type="text/css">
+	    <link href="/static/blog/css/style.css" rel="stylesheet">
+	    {%  block extend_style %}{% endblock %}
     </head>
     
     <body><div class="container">
@@ -86,7 +67,7 @@
             <header class="" id="overview">
 	            <div class="row">
 	                <div class="span9">
-	                    <h1>陶辉的分享网站</h1>
+	                    <h1 class="threed" style="font-size:28px;">陶辉的分享网站</h1>
 	                    <div id="blogdesc">关注高性能服务器与分布式服务设计.</div>
 	                </div>
 	            </div>
