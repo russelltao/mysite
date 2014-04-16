@@ -24,10 +24,10 @@ class LatestEntriesFeed(Feed):
     feed_type = ExtendedRSSFeed
 
     # Elements for the top-level, channel.
-    title = u"the5fire的技术博客"
-    link = "http://www.the5fire.com"
-    author = 'the5fire'
-    description = u"关注python、vim、linux、web开发和互联网--life is short, we need python."
+    title = u"陶辉笔记"
+    link = "http://taohui.org.cn"
+    author = '陶辉'
+    description = u"关注高性能linux."
 
     def items(self):
         return Post.objects.filter(status=0).order_by('-create_time')[:10]

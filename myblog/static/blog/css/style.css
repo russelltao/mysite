@@ -1,7 +1,22 @@
 body {
   padding-top: 50px; 
-  padding-right: 30px; 
-  background-color:#e8e8e8;
+  background-color:#F8F8FF;
+}
+
+.container {
+  margin-left: auto;
+  margin-right: auto;
+  *zoom: 1;
+}
+.panel-body h4 {
+    font-size:84%;
+}
+#content {
+    background-color:#fff;
+    padding:0 10px;
+    border:1px solid #bbb;
+    border-bottom-color:#aaa;
+    box-shadow:0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 img {
@@ -13,11 +28,7 @@ img {
     background-color:#efefef;
     height:45px;
     font-size:18px;
-}  
-.navbar {  
-    background-color: #87CEEB;  
 }
-
 .nav-tabs li {
     font-weight:bold;
     color: #555;
@@ -26,38 +37,23 @@ img {
     color:#08c;
 }
 
+.navbar {  
+    background-color: #000066;  
+    font-color: #FFFFFF;
+}
+.navbar-brand {
+	color: #FFFFFF;
+}
+.panel-heading {
+	background-color: #87CEEB;  
+}
+.panel-title {  
+    color: #555;
+}
+
 h1 {  
     color: #87CEEB;  
 } 
-.container {
-  margin-left: auto;
-  margin-right: auto;
-  *zoom: 1;
-}
-
-#content {
-    background-color:#fff;
-    padding:0 30px;
-    border:1px solid #bbb;
-    border-bottom-color:#aaa;
-    box-shadow:0 1px 4px rgba(0, 0, 0, 0.25);
-}
-
-.vintage{
-background: #EEE url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAHklEQVQImWNkYGBgYGD4//8/A5wF5SBYyAr+//8PAPOCFO0Q2zq7AAAAAElFTkSuQmCC) repeat;
-text-shadow: 5px -5px black, 4px -4px white;
-font-weight: bold;
--webkit-text-fill-color: transparent;
--webkit-background-clip: text }
-.stroke{
-color: transparent;
--webkit-text-stroke: 1px black;
-letter-spacing: 0.04em;
-background-color: }
-.threed{
-color: #fafafa;
-letter-spacing: 0;
-text-shadow: 0px 1px 0px #999, 0px 2px 0px #888, 0px 3px 0px #777, 0px 4px 0px #666, 0px 5px 0px #555, 0px 6px 0px #444, 0px 7px 0px #333, 0px 8px 7px #001135 }
 
 .line {
     margin-left: 2px;
@@ -65,7 +61,7 @@ text-shadow: 0px 1px 0px #999, 0px 2px 0px #888, 0px 3px 0px #777, 0px 4px 0px #
 }
 
 .under_line {
-    border-bottom:1px solid #333;
+    border-bottom:8px solid #333;
 }
 
 .clear {
@@ -93,7 +89,7 @@ header h1 {
 }
 
 #blogdesc {
-    font-size:13px;
+    font-size:11px;
     color:#666;
 }
 
@@ -122,7 +118,7 @@ header h1 {
     text-indent:2em;
 }
 
-.info {
+.panel info {
     font-size: 12px;
     color:#757575;
 }
@@ -155,27 +151,6 @@ header h1 {
     border-bottom:1px #DDD solid;
 }
 
-.content img, .content a img {
-    margin: 0 auto;
-    display: block;
-}
-
-.content h1 {
-    font-size:120%;
-}
-.content h2 {
-    font-size:118%;
-}
-.content h3 {
-    font-size:116%;
-}
-.content h4 {
-    font-size:114%;
-}
-.content h5 {
-    font-size:110%;
-}
-
 /*widget 配置*/
 .sidebar .widget h3 {
     font-size:14px;
@@ -190,7 +165,20 @@ header h1 {
     padding:2px;
 }
 
-/*code*/
-.docutils {
-    color: rgb(48, 206, 103);
-}
+.vintage{
+background: #EEE url(data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAHklEQVQImWNkYGBgYGD4//8/A5wF5SBYyAr+//8PAPOCFO0Q2zq7AAAAAElFTkSuQmCC) repeat;
+text-shadow: 5px -5px black, 4px -4px white;
+font-weight: bold;
+-webkit-text-fill-color: transparent;
+-webkit-background-clip: text }
+.stroke{
+color: transparent;
+-webkit-text-stroke: 1px black;
+letter-spacing: 0.04em;
+background-color: }
+.threed{
+color: #fafafa;
+letter-spacing: 0;
+text-shadow: 0px 1px 0px #999, 0px 2px 0px #888, 0px 3px 0px #777, 0px 4px 0px #666, 0px 5px 0px #555, 0px 6px 0px #444, 0px 7px 0px #333, 0px 8px 7px #001135 }
+
+

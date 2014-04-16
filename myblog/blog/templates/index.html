@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "mybase.html" %}
 {% load substring %}
 
 {% if title %}
@@ -16,7 +16,7 @@
                 </a>
             </h2>
             
-            <h4>
+            <div class="info">
 				作者：陶辉
                 | 分类：<a href="/category/{{ post.category.alias }}" title="查看 post.category.name 中的全部文章" rel="category tag">{{ post.category.name }}</a> 
                 | 标签： 
@@ -28,7 +28,7 @@
                 {% if user.is_authenticated %}
                     <a href="/admin/blog/post/{{post.id}}/" target="_blank">edit</a>
                 {% endif %}
-            </h4>
+            </div>
 
             <div class="clear"></div>
 

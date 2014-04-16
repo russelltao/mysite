@@ -14,9 +14,9 @@ admin.autodiscover()
   
 
 urlpatterns = patterns('',  
-    
+    (r'^accounts/', include('userena.urls')),
+    (r'^i18n/', include('django.conf.urls.i18n')),
     url(r'^$', IndexView.as_view(), name='home'),
-    url(r'^test/code', TemplateView.as_view(template_name='code.html')),
     
     url(r'^feed|rss/$', LatestEntriesFeed()),
     
@@ -24,10 +24,12 @@ urlpatterns = patterns('',
     url(r'^sitemap\.xml$', cache_page(60 * 60 * 12)(sitemap_views.sitemap ), {'sitemaps': {'posts': PostSitemap}}),
     url(r'^tag/(?P<tag>[\w|\.|\-]+)/$', TagsListView.as_view()),
     
-     url(r'^xmlrpc/$', 'django_xmlrpc.views.handle_xmlrpc', {}, 'xmlrpc'),
+    url(r'^xmlrpc/$', 'django_xmlrpc.views.handle_xmlrpc', {}, 'xmlrpc'),
+     
     url(r'^category/(?P<alias>\w+)/', CategoryListView.as_view()),
     url(r'^(?P<slug>[\w|\-|\d|\W]+?).html$', PostDetailView.as_view()),
     url(r'^(?P<slug>\w+)/$', PageDetailView.as_view()),
+    
 )  
 
 urlpatterns += staticfiles_urlpatterns() 

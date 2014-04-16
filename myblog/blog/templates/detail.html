@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "mybase.html" %}
 {% load duoshuo_tags %}
 
 {% block title %}{{ post.title }} | {% endblock %}
@@ -7,6 +7,9 @@
 
 {% block extend_style %} 
 <link href="/static/blog/css/code.css" rel="stylesheet" type="text/css">
+<script src="/static/blog/js/jquery-1.11.0.min.js"></script>
+{% load bootstrap3 %}
+{% bootstrap_javascript %}
 {% endblock %}
 
 {% block main %}
@@ -34,7 +37,7 @@
         {% endif %}
     </div>
 
-    {#% include 'includes/share.html' %#}
+    {% include 'includes/share.html' %}
     
     <div class="clear"></div>
 
@@ -47,7 +50,7 @@
     <div style="text-align:center;color:red;">
     <p>（转载本站文章请注明作者和出处 <a href="http://taohui.org.cn">陶辉 taohui.org.cn</a>）</p></div>
 
-    {#% include 'includes/share.html' %#}
+    {% include 'includes/share.html' %}
         <p class="pay">
         此文对我有价值，小额(无负担)赞助下^_^
         <a href="https://me.alipay.com/russelltao" class="btn btn-primary" target="_blank">支付宝打赏</a>

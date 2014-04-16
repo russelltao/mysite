@@ -49,12 +49,17 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',  
     'django.contrib.sessions',  
     'django.contrib.messages',  
-    'django.contrib.staticfiles',    
+    'django.contrib.staticfiles', 
+    'django.contrib.sites',   
     'bootstrap3',
     'myblog.blog',  
-    'django.contrib.admin',  
     'duoshuo',
     'rstify',
+    'django_xmlrpc',
+    'userena', 
+    'guardian',
+    'easy_thumbnails',
+    'accounts',
 )  
 
 MIDDLEWARE_CLASSES = (
@@ -66,13 +71,48 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'pingback.middleware.PingbackMiddleware',
     'myblog.blog.middleware.OnlineMiddleware',
+    'userena.middleware.UserenaLocaleMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 )
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.core.context_processors.request',
+    'django.contrib.auth.context_processors.auth',
+    'django.contrib.messages.context_processors.messages',
+    'django.core.context_processors.i18n',
+)
+
+AUTHENTICATION_BACKENDS = (
+    'userena.backends.UserenaAuthenticationBackend',
+    'guardian.backends.ObjectPermissionBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+USERENA_DISABLE_PROFILE_LIST = True
+
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'iamtaohui@gmail.com'
+EMAIL_HOST_PASSWORD = 'BatMan20123'
+
+ANONYMOUS_USER_ID = -1
+
+AUTH_PROFILE_MODULE = 'accounts.MyProfile'
+
+LOGIN_REDIRECT_URL = '/accounts/%(username)s/'
+LOGIN_URL = '/accounts/signin/'
+LOGOUT_URL = '/accounts/signout/'
+
+
 
 ROOT_URLCONF = 'myblog.urls'
 
 WSGI_APPLICATION = 'myblog.wsgi.application'
 
-LOG_FILE = '/mnt/myblog/logs/all.log'
+LOG_FILE = '/mnt/webLogs/myblog.log'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
@@ -167,15 +207,9 @@ CACHES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+LANGUAGE_CODE = 'zh-CN'
+TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -198,11 +232,12 @@ ONE_DAY = 24*60*60
 FIF_MIN = 15 * 60
 FIVE_MIN = 5 * 60
 
+SITE_ID = 1
 
 DUOSHUO_SECRET = 'bfd5ce8cc34ab82ad96ae6ade39f81a8'
 DUOSHUO_SHORT_NAME = 'taohui'
 
-DOMAIN = 'http://115.28.146.228:8080'
+DOMAIN = 'http://taohui.org.cn'
 DB_NAME = 'blog'
 DB_USER = 'root'
 DB_PWD = 'iamtaohui'

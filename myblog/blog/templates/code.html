@@ -3,15 +3,34 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<script src="/static/blog/js/jquery-1.11.0.min.js"></script>
 
 {% load bootstrap3 %}
+		{% bootstrap_css %}
+		{% bootstrap_javascript %}
 <link href="/CSS/code.css" rel="stylesheet" type="text/css">
 
 <title></title>
 
 </head>
 
-<body><div class="container">
+<body>
+
+<div class="btn-group">
+  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+    Action <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li><a href="#">Action</a></li>
+    <li><a href="#">Another action</a></li>
+    <li><a href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a href="#">Separated link</a></li>
+  </ul>
+</div>
+
+
+<div class="container">
 
 <div class="container" id="content">
 
@@ -30,6 +49,19 @@
 </pre>
 </div>
 
+
+<div class="btn-group">
+  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+    Action <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li><a href="#">Action</a></li>
+    <li><a href="#">Another action</a></li>
+    <li><a href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a href="#">Separated link</a></li>
+  </ul>
+</div>
 
 </div>
 </div>

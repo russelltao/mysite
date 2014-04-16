@@ -27,7 +27,7 @@ class PostAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.author = request.user
-        print "save user",obj.author
+
         if not obj.summary:
             obj.summary = obj.content
 
@@ -39,10 +39,7 @@ class PostAdmin(admin.ModelAdmin):
             #print "2:",obj.content_html
             #obj.content_html = restructuredtext(obj.content)
         else:
-            obj.content_html = obj.content.replace('\r\n', '<br/>')
-            import re
-            obj.content_html = re.sub(r"\[cc lang='\w+?'\]", '<pre>', obj.content_html)
-            obj.content_html = obj.content_html.replace('[/cc]', '</pre>')
+            obj.content_html = obj.content
         obj.save()
 
 
