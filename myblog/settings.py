@@ -53,6 +53,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',   
     'bootstrap3',
     'myblog.blog',  
+    'myblog.stock',  
     'duoshuo',
     'rstify',
     'django_xmlrpc',

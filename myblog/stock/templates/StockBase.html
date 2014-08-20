@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{% block title %}{% endblock %}陶辉笔记</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="{% block desc %}关于高性能服务器编程，与分布式海量数据下的架构与算法{% endblock %}">
+        <meta name="keywords" content="{% block keywords %}tcp,linux,server,web开发,工作经验,c/c++,nginx{% endblock %}">
+        <meta name="author" content="陶辉">
+        <meta name="baidu-site-verification" content="OVJMbWsbnb" />
+        <meta name="msvalidate.01" content="AE296BFFD763965B52C05924CE5968A6" />
+        <meta name="360-site-verification" content="84d5cc23e6a66f7e8c395e4d7122dded" />
+        <meta name="google-site-verification" content="3YCTCG2mEz8v4-Bj2kW435TbCkHPX2rISCaABA0UmcU" />
+        <link rel="pingback" href="/xmlrpc/" />
+        <link rel="shortcut icon" href="/image/favicon.ico" type="image/x-icon" />
+		
+        {% load bootstrap3 %}
+		{% bootstrap_css %}
+		
+	    <link href="/static/blog/css/style.css" rel="stylesheet">
+	    {%  block extend_style %}{% endblock %}
+    </head>
+    
+    <body>
+<div class="container">
+<div class="row">
+	<div id="main" class="col-md-7">
+		<div class="panel panel-default">
+			    <ul class="nav nav-tabs">
+	                  {% for sid,costprice,isActive,link in stocklist %}
+	                  
+	                  {% if isActive %}
+	                  <li class="active"><a href="{{ link }}">{{ sid }}</a></li>
+	                  {% else %}
+	                  <li><a href="{{ link }}">{{ sid }}</a></li>
+	                  {% endif %}
+	                   
+	                  {% endfor %}
+	             </ul>
+
+			<div class="panel-body">
+                   {% block main %}{% endblock %}
+             </div>
+        </div>
+	</div>
+    <div class="sidebar col-md-5">
+    </div>
+</div>
+</div>
+    </body>
+</html>

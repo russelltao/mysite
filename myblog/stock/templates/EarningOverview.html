@@ -1,0 +1,11 @@
+{% extends "StockBase.html" %}
+
+{% block title %}{{ videoname }} | {% endblock %}
+{% block keywords %}{{ keywords }}{% endblock %}
+
+{% block main %} 
+<div class="row">
+<div>{{ curpri }}</div>
+<img src="{{ minuteurl }}" class="img-responsive" alt="{{ minuteurl }}" />
+</div>
+{% endblock %}

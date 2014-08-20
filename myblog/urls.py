@@ -3,6 +3,8 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns  
 from myblog.blog.views import (PostDetailView,CategoryListView,
                                PageDetailView,IndexView,TagsListView)
+from myblog.stock.views import StockDetailView
+                               
 from django.views.decorators.cache import cache_page
 from django.contrib.sitemaps import views as sitemap_views
 from sitemap import PostSitemap
@@ -25,6 +27,8 @@ urlpatterns = patterns('',
     url(r'^tag/(?P<tag>[\w|\.|\-]+)/$', TagsListView.as_view()),
     
     url(r'^xmlrpc/$', 'django_xmlrpc.views.handle_xmlrpc', {}, 'xmlrpc'),
+    
+    (r'^stock/(?P<sid>.*)', StockDetailView.as_view()),
      
     url(r'^category/(?P<alias>\w+)/', CategoryListView.as_view()),
     url(r'^(?P<slug>[\w|\-|\d|\W]+?).html$', PostDetailView.as_view()),
