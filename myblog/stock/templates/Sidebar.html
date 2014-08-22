@@ -1,0 +1,34 @@
+<div class="widget">
+    <div class="panel panel-default">
+	    <div class="panel-heading"><h3 class="panel-title">总收益</h3></div>
+	    <div class="panel-body">
+{% if isTotalEarn %}
+		    <div class="textwidget" style="color:red">总收益：{{ totalincome }}</div>
+{% else %}
+		    <div class="textwidget" style="color:green">总收益：{{ totalincome }}</div>
+{% endif %}
+		    
+		</div>
+    </div>
+    
+{% for stockname,initpri,curpri,count,income,earn in allStocksIncome %}
+    <div class="panel panel-default">
+	    <div class="panel-heading"><h3 class="panel-title">{{ stockname }} 收益</h3></div>
+	    <div class="panel-body">
+		    <div class="textwidget">
+		    <ul class="list-unstyled">
+{% if earn %}
+		    <li style="color:red">收益：{{ income }}</li>
+{% else %}
+		    <li style="color:green">收益：{{ income }}</li>
+{% endif %}
+		    <li>成本价：{{ initpri }}</li>
+		    <li>当前价：{{ curpri }}</li>
+		    <li>持有股数：{{ count }}</li>	    
+			</ul>
+		    </div>
+		</div>
+    </div>
+{% endfor %}
+
+</div>

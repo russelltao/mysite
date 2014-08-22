@@ -18,14 +18,18 @@ def urlcallback(a,b,c):
 
 chartcolors = ['0xcf4040', '0x40cf40','0x663300','0x9900ff','0xff0000','0xc06666ff','0x808080']
 
-
-
 class processYahooData():
     def __init__(self):
         self.today = datetime.datetime.now()
 
         self.sinaIdManage = sinaIdManage()
         self.sinaIdManage.initLocalData()  
+        
+    def getLocalData(self, sid):
+        datafolder = getLatestDataFolder()
+        sfile=os.listdir(datafolder)
+        for ssfile in sfile:
+            print ssfile
         
     def getMissingFromYahoo(self, storeFolder):
         tmpExistStock = {}
@@ -41,6 +45,8 @@ class processYahooData():
         else:
             print "Error! %s is not dir"%(storeFolder),os.stat(storeFolder)
             return False
+        
+        self.getDapanData(storeFolder)
         
         newAdd = 0
         notNeedUpdate = 0
@@ -80,7 +86,7 @@ class processYahooData():
                 newAdd += 1   
         
 
-        self.getDapanData(storeFolder)
+        
         t2 = datetime.datetime.now()
         print "getMissingFromYahoo cost time %s. keep:%d,add:%d,unavailable:%d"\
             %(t2-t1, keep, newAdd, notNeedUpdate)
@@ -134,14 +140,15 @@ class processYahooData():
         
         laststorefolder =  storeFolder + "/%.2d%.2d%.2d"%(laststoreday.year, laststoreday.month, laststoreday.day)
         todaystorefolder = storeFolder + "/%.2d%.2d%.2d"%(self.today.year, self.today.month, self.today.day)
-        self.getMissingFromYahoo(laststorefolder)
-        
+        print "laststorefolder",laststorefolder
         if os.path.exists(todaystorefolder):
-            pass
+            print "today folder %s exist! "%(todaystorefolder)
         else:
             os.mkdir(todaystorefolder)   
+            print "mkdir",todaystorefolder
 
-
+        self.getMissingFromYahoo(laststorefolder)
+        
         t1 = datetime.datetime.now()
         sfile=os.listdir(laststorefolder)
         getRecent = 0
@@ -193,7 +200,6 @@ class processYahooData():
         
         tmp = {}
         
-
         rows = []
         first = True
 
@@ -268,7 +274,6 @@ def getDayData(id):
     #print htmlPage
     sock.close()                     
          
-
     reg = "<a target='_blank'\s+href='http://vip.stock.finance.sina.com.cn/.*&date=\d{4}-\d{2}-\d{2}'>\s*([^\s]+)\s+</a>\s*</div></td>\s*<td[^\d]*([^<]*)</div></td>\s+<td[^\d]*([^<]*)</div></td>\s+<td[^\d]*([^<]*)</div></td>\s+<td[^\d]*([^<]*)</div></td>\s+<td[^\d]*([^<]*)</div></td>\s+<td[^\d]*([^<]*)</div></td>\s+"
     items = re.findall(reg, htmlPage)
     if items:

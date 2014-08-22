@@ -159,7 +159,7 @@ class sinaStockAPI():
             sinaUrl += common.stockIDforSina(sid)
             sinaUrl += ","
   
-        #print "request:",sinaUrl
+        print "request:",sinaUrl
         req = urllib2.Request(sinaUrl)   
         try:    
             response = urllib2.urlopen(req)
@@ -168,12 +168,13 @@ class sinaStockAPI():
             #print "http connection error."
             return None      
         
-        print strResult
-        allDatas = strResult.split("\n")
+        #print strResult
+        allDatas = strResult.split(";\n")
         i = 0
         for oneData in allDatas:
             i+=1
             if i > len(sidList):
+                print "Waring:",i,len(sidList)
                 break
             check = re.findall(r'var hq_str_([^=]*)=\"(.*)\"', oneData)
             if len(check) == 0:
@@ -198,16 +199,16 @@ class sinaStockAPI():
             stockValues = stockResultArray[1].split(",")
             
             meaning = {}
-            i = 0
+            j = 0
             for key in sinaStockCol:
-                meaning[key]=stockValues[i]
-                i+=1
+                meaning[key.decode('gbk')]=stockValues[j].decode('gbk')
+                j+=1
             curPriList.append(meaning)
-            #print len(sinaStockCol), len(stockValues),stockValues
+            print stockValues[0]
             #curPriList.append(stockValues[1:6])
             
         if len(curPriList) != len(sidList):
-            #print "getCurPriFromSina error:",sinaUrl,strResult
+            print "getCurPriFromSina error:",sinaUrl,strResult
             #print "curPriList",curPriList
             pass
         return curPriList
