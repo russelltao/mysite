@@ -25,12 +25,6 @@ class processYahooData():
         self.sinaIdManage = sinaIdManage()
         self.sinaIdManage.initLocalData()  
         
-    def getLocalData(self, sid):
-        datafolder = getLatestDataFolder()
-        sfile=os.listdir(datafolder)
-        for ssfile in sfile:
-            print ssfile
-        
     def getMissingFromYahoo(self, storeFolder):
         tmpExistStock = {}
         

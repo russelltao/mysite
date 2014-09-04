@@ -5,6 +5,7 @@ import urllib2
 import datetime, time
 import common,csv
 import os
+from dbAPI import getStockIdDB,stockDB
 
 sinaStockCol=("股票名称", "今日开盘价", "昨日收盘价", "当前价格","今日最高价","今日最低价",\
 "竞买价","竞卖价","成交量","成交金额","买一成交量","买一成交价",\
@@ -261,13 +262,9 @@ class CollectSinaData():
     def __init__(self, intervalSec = 10):
         self.initSinaUrl = "http://hq.sinajs.cn/list="
         self.intervalSec = intervalSec
-        self.glabalFolder = "d:/everbox/data/"
-        if os.path.exists(self.glabalFolder):
-            pass
-        else:
-            os.mkdir(self.glabalFolder)
 
         self.columns = ["time","curpri","vol","compbuy","compsell"]
+        
 
         for i in range(5):
             self.columns.append("%dsellvol"%(5-i))
@@ -295,51 +292,31 @@ class CollectSinaData():
             	time.sleep(self.intervalSec)
             	continue
 
-	    n = 0
+            n = 0
+            stockdb = stockDB()
+            print "len",len(result),len(idlist)
             for row in result:
+                print n
                 id = idlist[n]
                 n+=1
                 
                 if row is None:
-                    print "get data error:",idlist[n]
+                    print "get data error:",id
                     continue
-                
-                tmpfolder = self.glabalFolder + id
-                if os.path.exists(tmpfolder):
-                    pass
-                else:
-                    os.mkdir(tmpfolder)
-                    
-                filename = tmpfolder+"/%s_%.2d%.2d%.2d.csv"%(id, curTime.year, curTime.month, curTime.day)
-                
-                if os.path.exists(filename):
-                    if not filelist.has_key(id):
-                        print "open file", filename
-                        filelist[id] = open(filename, 'ab')
-                        csvlist[id] = csv.writer(filelist[id])
-                else:
-                    if filelist.has_key(id):
-                        filelist[id].close()
-                    print "create file",filename
-                    filelist[id] = open(filename, 'wb')
-                    csvlist[id] = csv.writer(filelist[id])
-                    csvlist[id].writerow(self.columns)
 
-                #print "row=",row
+                print id,"row=",row
+                
                 if lasttime.has_key(id):
-                    if lasttime[id] == row[0]:
+                    if lasttime[id] == row[1]:
                         print "same time as ",lasttime[id],id
                         continue
                     row[2] == row[2] - lastvol[id]
                     
-                csvlist[id].writerow(row)
-                lasttime[id] = row[0]
-                lastvol[id] = row[2]
-                filelist[id].flush()
-
+                stockdb.insertStock(id, row)
+                
             time.sleep(self.intervalSec)
         
-    def parse(self, oneData, realtimeData):
+    def parse(self, sid, oneData, realtimeData):
         #print "parse=",oneData    
         check = re.findall(r'var hq_str_([^=]*)=\"(.*)\"', oneData)
         
@@ -350,30 +327,21 @@ class CollectSinaData():
         stockValues = stockResultArray[1].split(",")
         count=0
         if len(stockValues) >= len(sinaStockCol):
-            print "stockValues[3]=", stockValues[3], type(stockValues[3])
+            #print "stockValues[3]=", stockValues[3], type(stockValues[3])
 
             if stockValues[3] == "0.00" or stockValues[3] == "0.0":
-                print "error 2"
+                print "error 2",stockValues
                 return False
-
+            
+            #date
+            realtimeData.append(stockValues[30])
             #time
             realtimeData.append(stockValues[31])
-            #curprice
-            realtimeData.append(float(stockValues[3]))
-            #curvol
-            realtimeData.append(int(stockValues[8]))
-            #compete buy price
-            realtimeData.append(float(stockValues[6]))
-            #compete sell price
-            realtimeData.append(float(stockValues[7]))
-            #5sell5 vol + price -> 5sell1
-            for i in range(5):
-                realtimeData.append(int(stockValues[29-2*i-1]))
-                realtimeData.append(float(stockValues[29-2*i]))
-            for i in range(5):
-                realtimeData.append(int(stockValues[10+2*i]))
-                realtimeData.append(float(stockValues[10+2*i+1]))
-            #print realtimeData
+            #openprice
+            realtimeData.append(stockValues[1])
+            
+            for i in range(27):
+                realtimeData.append(stockValues[3+i])
             
         return True
     
@@ -386,7 +354,6 @@ class CollectSinaData():
             sinaUrl += ","
 
         #print "sinaUrl",sinaUrl
-
         req = urllib2.Request(sinaUrl)
         try:    
             response = urllib2.urlopen(req)
@@ -395,7 +362,7 @@ class CollectSinaData():
             return False
         
         strResult = str(response.read())
-        #print strResult
+        print idList,strResult
     
         allDatas = strResult.split("\n")
         n = 0
@@ -403,10 +370,10 @@ class CollectSinaData():
             if oneData == "":
                 break
 
-            #print n, len(allDatas), len(comList)
+            #print n, len(allDatas),oneData
             realtimeData = []
             totalData = []
-            if True == self.parse(oneData, realtimeData):
+            if True == self.parse(idList[n],oneData, realtimeData):
                 resultTable.append(realtimeData)
             else:
                 resultTable.append(None)
@@ -417,9 +384,16 @@ class CollectSinaData():
 
 
 if __name__ == "__main__":
-    sinaobj = CollectSinaData(3)
-    sidList = ["300078","601808","600815","600835","000858","600005","600030","600062","600396","600469","600479","601111","601398","000027","000402","000777"]
-    res = sinaobj.startLoop(sidList)
+    idDB = getStockIdDB()
+    rows = idDB.getAllSid()
+    idDB.close()
+    sids = []
+    for row in rows:
+        sids.append(str(row[0]))
+    print sids
+    sinaobj = CollectSinaData(6)
+    #sidList = ["300078","601808","600815","600835","000858","600005","600030","600062","600396","600469","600479","601111","601398","000027","000402","000777"]
+    res = sinaobj.startLoop(sids)
     print "RESULT:",res
 
     

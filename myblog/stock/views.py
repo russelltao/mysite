@@ -13,6 +13,8 @@ from django.views.generic.base import TemplateView
 import getCurDataFromSina
 from myblog.stock.models import OwnerStocks
 import os
+import MySQLdb
+from dbAPI import getStockIdDB,stockDB
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +34,10 @@ class BaseStock(object):
             owner = kwargs.get("owner")
             if owner != '' and owner != None:
                 self.owner = owner
-            allrows = OwnerStocks.objects.all()
+            allbuyrows = OwnerStocks.objects.all()
             ownerNav = []
             ownerDict = {}
-            for row in allrows:
+            for row in allbuyrows:
                 if ownerDict.has_key(row.owner):
                     continue
                 else:
@@ -49,7 +51,12 @@ class BaseStock(object):
             self.allProcStocks = OwnerStocks.objects.filter(owner=self.owner)
 
             sid = kwargs.get("sid",None)
-
+            sinaId = stockIDforSina(sid)
+            context["dailyurl"]="http://image.sinajs.cn/newchart/daily/n/%s.gif"%(sinaId)
+            context["minuteurl"]="http://image.sinajs.cn/newchart/min/n/%s.gif"%(sinaId)
+            context["weekurl"]="http://image.sinajs.cn/newchart/weekly/n/%s.gif"%(sinaId)
+            context["monthurl"]="http://image.sinajs.cn/newchart/monthly/n/%s.gif"%(sinaId)
+        
             slist  = []
             resultmap = self.get_all_cur_info(context)
                 
@@ -72,6 +79,7 @@ class BaseStock(object):
         sinaIds = []
         for r in self.allProcStocks:
             sinaIds.append(stockIDforSina(r.stockId))
+            print 'get_all_cur_info',r
 
         sinadata = getCurDataFromSina.sinaStockAPI()
         resultmap = sinadata.getCurPriFromSina(sinaIds)
@@ -89,7 +97,7 @@ class BaseStock(object):
             income = (curpri-initPri)*stockCount
             searnings.append((name, initPri, curpri, stockCount, income, income>0))
             totalearning+=income
-            print 'currentpri',curpri,stockCount,income,initPri
+            #print 'currentpri',curpri,stockCount,income,initPri
             i+=1
             
         context['allStocksIncome'] = searnings
@@ -98,6 +106,7 @@ class BaseStock(object):
         
         return resultmap
 
+    
 class StockDetailView(BaseStock, TemplateView):
     template_name = "StockDetail.html"
 
@@ -105,33 +114,74 @@ class StockDetailView(BaseStock, TemplateView):
         context = super(StockDetailView, self).get_context_data(**kwargs)
 
         sid = kwargs.get("sid",None)
-        sinaId = stockIDforSina(sid)
-        sinadata = getCurDataFromSina.sinaStockAPI()
-        resultmap = sinadata.getCurPriFromSina([sinaId])
+        sdb = stockDB()
+        
+        alldays = sdb.getAllDate(sid)
+        showday = alldays[-1][0]
+        print "getAllDate",alldays,showday
+        
+        filename = 'pankou_%s_%s.jpg'%(sid, showday)
+        imgUrl = '/stockimage/'+filename
+        imgLoc = "/mnt/myblog/stock/"+filename
+        context['pankouVolUrl'] = imgUrl
+        xAxisTitle = 'showday %s'%(showday)
+        yAxisTitle = 'VOL'
+        #if os.path.exists(imgLoc):
+            #return context
+        
+        rows = sdb.getDayData(sid,showday)
 
-        context['stockInfoInTime'] = self.constructInfoInTime(resultmap[0])
-        context["dailyurl"]="http://image.sinajs.cn/newchart/daily/n/%s.gif"%(sinaId)
-        context["minuteurl"]="http://image.sinajs.cn/newchart/min/n/%s.gif"%(sinaId)
-        context["weekurl"]="http://image.sinajs.cn/newchart/weekly/n/%s.gif"%(sinaId)
-        context["monthurl"]="http://image.sinajs.cn/newchart/monthly/n/%s.gif"%(sinaId)
+        times = []
+        for row in rows:
+            times.append(str(row[1]))
+        linenames = []
+        for i in range(5):
+            linenames.append("buy%d"%(i+1))
+        for i in range(5):
+            linenames.append("sell%d"%(1+i))
+            
+        voldatas = []
+
+        for i in range(5):
+            line1 = []
+            line2 = []
+            for row in rows:
+                line1.append(int(row[29-2*i-1]))
+                line2.append("%.2f"%(row[29-2*i]))
+            voldatas.append(line1)
+
+        curprices = []
+        vols = []
+        for row in rows:
+            vols.append(int(row[8]))
+
+        line = []
+        for row in rows:
+            line.append("%.2f"%row[3])
+        curprices.append(line)
+        
+        for i in range(5):
+            line1 = []
+            line2 = []
+            for row in rows:
+                line1.append(int(row[10+2*i]))
+                line2.append("%.2f"%(row[10+2*i+1])) 
+            voldatas.append(line1)
+        
+        colors=['0x00CED1','0x00C5CD','0x008B8B','0x00688B','0x0000CD',\
+                '0xEEA2AD','0xEE82EE','0xEE7942','0xEE6A50','0xEE3B3B']
+
+        
+        chart = CreateDiagram.SelfDefStockChart()
+        
+        chart.addXYChart("pankouVol", voldatas, times, linenames, \
+                                      colors, xAxisTitle,yAxisTitle)
+        c = chart.addXYChart("pankouVol", curprices, times, ['curpri'], \
+                                      ['0xff9999'], xAxisTitle,yAxisTitle)
+        #chart.addBar(c, vols, times)
+        chart.makeChart(imgLoc)
 
         return context
-    
-    def constructInfoInTime(self, infodict):
-        stockInfoInTime = []
-        cur = ['当前价格',"成交量","成交金额"]
-        sell5 = ['卖五成交价','卖五成交量','卖四成交价','卖四成交量','卖三成交价','卖三成交量','卖二成交价','卖二成交量',]
-        buy5 = ["买一成交量","买一成交价","买二成交量","买二成交价","买三成交量","买三成交价","买四成交量","买四成交价","买五成交量","买五成交价"]
-        sell5.extend(cur)
-        sell5.extend(buy5)
-        self.appendNameValue(stockInfoInTime, sell5, infodict)
-        
-        return stockInfoInTime
-
-
-    def appendNameValue(self, list, names, infodict):
-        for name in names:
-            list.append((name,infodict[COL(name)]))
     
 class EarningsOverView(BaseStock, TemplateView):
     template_name = "EarningOverview.html"
@@ -152,7 +202,7 @@ class EarningsOverView(BaseStock, TemplateView):
             
         today = datetime.date.today()
         fromday = today-datetime.timedelta(days=lastdays)
-        filename = 'earn_%s_%s_to_%s.jpg'%(self.owner, fromday, today)
+        filename = 'earn_%s_%d_%s_to_%s.jpg'%(self.owner, lastdays, fromday, today)
         imgUrl = '/stockimage/'+filename
         imgLoc = "/mnt/myblog/stock/"+filename
         context['earningHistoryUrl'] = imgUrl
@@ -175,8 +225,9 @@ class EarningsOverView(BaseStock, TemplateView):
                 
             j+=1
         
-        allrows = data.getSameData(allrows, fromday, today)
-        print "allrows",len(allrows)
+        allrowsInit = data.getSameData(allrows, fromday, today)
+        allrows = data.reduceData(allrowsInit)
+        print "allrows",len(allrows),len(allrowsInit)
         
         totalearningHistory = []
         days = []

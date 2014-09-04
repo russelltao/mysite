@@ -5,31 +5,25 @@
 
 {% block main %} 
 <div class="row">
-	<div class="col-md-8">
 		<div class="row">
-			<img src="{{ minuteurl }}" class="img-responsive" alt="{{ minuteurl }}" />
+		<a href="{{ pankouVolUrl }}">
+			<img src="{{ pankouVolUrl }}" class="img-responsive" alt="{{ pankouVolUrl }}" />
+		</a></div>
+		
+		<div class="row">
+			<a href="{{ minuteurl }}">
+			<img src="{{ minuteurl }}" class="img-responsive" alt="{{ minuteurl }}" /></a>
 		</div>
-		<div class="row">
-			<img src="{{dailyurl}}" class="img-responsive" alt="{{dailyurl}}" />
-		</div>
-		<div class="row">
+		<div class="row"><a href="{{ dailyurl }}">
+			<img src="{{dailyurl}}" class="img-responsive" alt="{{ dailyurl }}" />
+		</a></div>
+		<div class="row"><a href="{{ weekurl }}">
 			<img src="{{ weekurl }}" class="img-responsive" alt="{{ weekurl }}" />
-		</div>
-		<div class="row">
+		</a></div>
+		<div class="row"><a href="{{ monthurl }}">
 			<img src="{{ monthurl }}" class="img-responsive" alt="{{ monthurl }}" />
-		</div>
-	</div>
+		</a></div>
+
 	
-	<div class="col-md-4">
-		<div class="row">
-		    <div class="textwidget">
-		    <ul class="list-unstyled">
-{% for key,value in stockInfoInTime %}
-		    <li>{{ key }}：{{ value }}</li>
-{% endfor %}
-			</ul>
-		    </div>
-		</div>
-	</div>
 </div>
 {% endblock %}

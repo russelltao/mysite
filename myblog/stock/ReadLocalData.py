@@ -24,11 +24,25 @@ class ReadLocalData():
 
         return rows
     
+    def reduceData(self, allrows):
+        rowCount = len(allrows)
+        if rowCount <= 200:
+            return allrows
+        
+        steps = rowCount/100
+        result = []
+        i = 0
+        for i in xrange(0,rowCount,steps):
+            result.append(allrows[i])
+        
+        return result
+    
     def getSameData(self, allrows, fromDay, toDay):
         indexes = []
+
         for ones in allrows:
             indexes.append(0)
-            
+
         step = datetime.timedelta(days=1)
         curday = fromDay
         result = []

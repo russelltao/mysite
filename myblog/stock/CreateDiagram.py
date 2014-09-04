@@ -3,7 +3,8 @@ from FinanceChart import *
 
 import csv,re,datetime
 
-chartcolors = ['0x0000ff','0xff00ff','0x008000','0x99ff99','0x006060','0xc06666ff','0xff9999','0x99ff99']
+chartcolors = ['0x0000ff','0xff00ff','0x008000','0x99ff99','0x006060','0xc06666ff','0xff9999','0x99ff99',\
+               '0x0000ff','0xff00ff','0x008000','0x99ff99','0x006060','0xc06666ff','0xff9999','0x99ff99']
 class stockChart():
     def __init__(self):
         self.c = None
@@ -175,13 +176,83 @@ def createStockDiagram(stockid, startDate, endDate):
     c.makeChart(globalTopFolder+"/test/%s.png"%(title))
 
 
+class SelfDefStockChart:
+    def __init__(self):
+        self.chart = None
+        self.height = [0, 600,400]
+        self.cnum = 0
+        
+    def initMultiChart(self, width,bgColor,edgeColor,raisedEffect):
+        if self.chart == None:
+            self.width = width
+            self.chart = MultiChart(width, sum(self.height),bgColor,edgeColor,raisedEffect)
+            
+            return True
+        return False
+        
+    def addXYChart(self, title, lines, labels, linenames, linecolors, xAxisTitle, yAxisTitle):
+        if len(labels) != len(lines[0]) or len(linenames) != len(lines) or len(linecolors) != len(linenames):
+            print "parameter length error,",len(lines),len(linenames),len(labels),len(linecolors) 
+            return None
+        length = len(labels)
+        
+        self.cnum+=1
+        height = self.height[self.cnum]
+        
+        self.initMultiChart(length,'0xffffc0', '0x000000', 1)
+
+        # Create a XYChart object of size 300 x 180 pixels, with a pale yellow (0xffffc0)
+        # background, a black border, and 1 pixel 3D border effect.
+        c = XYChart(length, height, '0xffffc0', '0x000000', 1)
+        c.setRoundedFrame()
+        
+        # Set the plotarea at (45, 35) and of size 240 x 120 pixels, with white background.
+        # Turn on both horizontal and vertical grid lines with light grey color (0xc0c0c0)
+        c.setPlotArea(60, 20, length-100, height-50, '0xffffff', -1, -1, '0xc0c0c0', -1)
+        # Add a legend box at (50, 30) (top of the chart) with horizontal layout. Use 9
+        # pts Arial Bold font. Set the background and border color to Transparent.
+        c.addLegend(50, 30, 0, "arialbd.ttf", 9).setBackground(Transparent)
+        #c.addLegend(45, 12, 0, "", 8).setBackground(Transparent)
+        c.addTitle(title, "arialbd.ttf", 9, '0xffffff').setBackground(c.patternColor(['0x004000', '0x008000'], 2))
+    
+        c.yAxis().setTitle(yAxisTitle)
+        # Set the labels on the x axis
+        c.xAxis().setLabels(labels)
+        c.xAxis().setLabelStep(len(labels)/10)
+        # Add a title to the x axis
+        c.xAxis().setTitle(xAxisTitle)
+        
+        # Add a line layer to the chart
+        layer = c.addSplineLayer()
+        layer.setLineWidth(2)
+        
+        colnum = 0
+        
+        # Add the first line. Plot the points with a 7 pixel square symbol
+        for rows in lines:
+            layer.addDataSet(rows, linecolors[colnum], linenames[colnum])#.setDataSymbol(CircleSymbol, 6, 0xffff00)
+            colnum+=1
+            
+        self.chart.addChart(0,self.height[self.cnum-1],c)
+        
+        return c
+    
+    def addBar(self, c, vols, labels):
+        # Add a bar chart layer using the given data
+        c.addBarLayer(vols)
+        
+        # Set the labels on the x axis.
+        c.xAxis().setLabels(labels)
+
+    def makeChart(self, imagefile):
+        self.chart.makeChart(imagefile)
 
     
 def makeSymbolChart(title, datas, labels, linenames, imagefile, xAxisTitle, yAxisTitle):
     totalShowColNum = len(datas)
-    
+    print "linenames=",len(linenames),'labels=',len(labels),type(labels[0])
     for row in datas:
-        print len(row)
+        print len(row),'step=',len(datas[0])/10
     
     if totalShowColNum == 0 or totalShowColNum > 7:
         print "datas column error",  totalShowColNum
@@ -218,13 +289,13 @@ def makeSymbolChart(title, datas, labels, linenames, imagefile, xAxisTitle, yAxi
     
     # Add the first line. Plot the points with a 7 pixel square symbol
     for rows in datas:
-        layer.addDataSet(rows, chartcolors[colnum], linenames[colnum]).setDataSymbol(CircleSymbol, 6, 0xffff00)
+        layer.addDataSet(rows, chartcolors[colnum], linenames[colnum])#.setDataSymbol(CircleSymbol, 6, 0xffff00)
         colnum+=1
 
     #layer.setDataLabelFormat("{value|0}%")
     
     # Output the chart
-    c.makeChart(imagefile)
+    print c.makeChart(imagefile)
     
     return imagefile
 
