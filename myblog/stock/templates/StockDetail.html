@@ -3,8 +3,36 @@
 {% block title %}{{ videoname }} | {% endblock %}
 {% block keywords %}{{ keywords }}{% endblock %}
 
+{% block extend_style %} 
+<script src="/js/loading.js" type="text/javascript" charset="GBK"></script>
+<script src="/js/util.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/absPainter.js" type="text/javascript" charset="GBK"></script>
+<script src="/js/ajax.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/crossLines.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/axis-x.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/linepainter.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/volumePainter.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/axis-y.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/chartEventHelper.js?a" type="text/javascript" charset="GBK"></script>
+
+<script src="/js/tip.js" type="text/javascript" charset="GBK"></script>
+<script type="text/javascript" src="/js/controller.js" charset="GBK"></script>
+
+
+<script src="/js/DrawKL.js"></script>
+<script type="text/javascript" src="/js/k-data.js"></script>
+{% endblock %}
+
 {% block main %} 
 <div class="row">
+    <canvas id="canvasKL" width="1002" height="460" style="z-index: 2; border: 1px solid #69c">
+        <p>hey,您的浏览器不支持html5，换个浏览器吧，比如google chrome，firefox</p>
+    </canvas>
+</div>
+<div class="row">
+{% for day in pankouDays %}
+{{ day }}
+{% endfor %}
 		<div class="row">
 		<a href="{{ pankouVolUrl }}">
 			<img src="{{ pankouVolUrl }}" class="img-responsive" alt="{{ pankouVolUrl }}" />

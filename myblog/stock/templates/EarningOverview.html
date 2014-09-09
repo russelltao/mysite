@@ -3,10 +3,32 @@
 {% block title %}{{ videoname }} | {% endblock %}
 {% block keywords %}{{ keywords }}{% endblock %}
 
+{% block extend_style %} 
+<script src="/js/loading.js" type="text/javascript" charset="GBK"></script>
+<script src="/js/util.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/absPainter.js" type="text/javascript" charset="GBK"></script>
+<script src="/js/ajax.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/crossLines.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/axis-x.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/linepainter.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/volumePainter.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/axis-y.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/chartEventHelper.js?a" type="text/javascript" charset="GBK"></script>
+
+<script src="/js/DrawPankou.js"></script>
+<script src="/js/mins-data.js"></script>
+{% endblock %}
+
 {% block main %} 
+
 <div class="row">
+	<div>成本：{{ TotalCost }} 当前总资产： {{ CurrentAssets }}</div>
+	<canvas id="canvas" width="414" height="310" style="border:1px solid #c3c3c3;">Your browser does not support the canvas element.</canvas>
 	<div class="row"><a href="{{ earningHistoryUrl }}">
 		<img src="{{ earningHistoryUrl }}" class="img-responsive" alt="{{ earningHistoryUrl }}" />
 	</a></div>
 </div>
+
+    <div id="debug"></div>
+
 {% endblock %}

@@ -37,6 +37,7 @@ class BaseStock(object):
             allbuyrows = OwnerStocks.objects.all()
             ownerNav = []
             ownerDict = {}
+            
             for row in allbuyrows:
                 if ownerDict.has_key(row.owner):
                     continue
@@ -46,10 +47,20 @@ class BaseStock(object):
                     if row.owner == self.owner:
                         active = True
                     ownerNav.append((row.owner,'/stocks/%s/'%(row.owner),''))
-                    
+
+                
             context['owners'] = ownerNav
+            
             self.allProcStocks = OwnerStocks.objects.filter(owner=self.owner)
 
+            totalCost = 0  
+            self.listStocks = []
+            for row in self.allProcStocks:
+                totalCost += row.costPrice*row.stockCount
+                print "self.totalCost,",totalCost,"id=",row.stockId
+                self.listStocks.append(row)
+                    
+            context['TotalCost'] = totalCost
             sid = kwargs.get("sid",None)
             sinaId = stockIDforSina(sid)
             context["dailyurl"]="http://image.sinajs.cn/newchart/daily/n/%s.gif"%(sinaId)
@@ -117,8 +128,15 @@ class StockDetailView(BaseStock, TemplateView):
         sdb = stockDB()
         
         alldays = sdb.getAllDate(sid)
+        if len(alldays) == 0:
+            print "no data"
+            return context
         showday = alldays[-1][0]
+        pankouDays = []
+        for row in alldays:
+            pankouDays.append(row[0])
         print "getAllDate",alldays,showday
+        context['pankouDays'] = pankouDays
         
         filename = 'pankou_%s_%s.jpg'%(sid, showday)
         imgUrl = '/stockimage/'+filename
@@ -209,9 +227,8 @@ class EarningsOverView(BaseStock, TemplateView):
         xAxisTitle = 'from %s to %s'%(fromday, today)
         yAxisTitle = 'RMB'
         
-        if os.path.exists(imgLoc):
-            return context
-        
+
+        totalAssets = 0
         allrows = []
         procInfo = []
         j = 0
@@ -222,8 +239,13 @@ class EarningsOverView(BaseStock, TemplateView):
             else:
                 allrows.append(rows)
                 procInfo.append(self.allProcStocks[j])
-                
+                print "stockCount",self.allProcStocks[j].stockCount,rows[0],rows[-1]
+                totalAssets += self.allProcStocks[j].stockCount*float(rows[-1][DATE_COL_CLOSE])
             j+=1
+            
+        context['CurrentAssets'] = totalAssets
+        if os.path.exists(imgLoc):
+            return context
         
         allrowsInit = data.getSameData(allrows, fromday, today)
         allrows = data.reduceData(allrowsInit)
@@ -248,6 +270,9 @@ class EarningsOverView(BaseStock, TemplateView):
 
         CreateDiagram.makeSymbolChart("earn", [totalearningHistory], days, ['totalearning'], \
                                       imgLoc, xAxisTitle,yAxisTitle)
+        
+        for row in self.allProcStocks:
+            pass
         
         return context
     

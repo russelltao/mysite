@@ -1,17 +1,19 @@
 #coding=gbk
 import MySQLdb
 import time
+import datetime
+import getAllIdFromSina
 
 DBCOL_NAMELIST = ['date','time','openpri','curpri','highpri','lowpri',\
                   'comp_buy','comp_sell','exch_vol','exch_amount','1buy_vol','1buy_pri'\
                   ,'2buy_vol','2buy_pri','3buy_vol','3buy_pri','4buy_vol','4buy_pri','5buy_vol','5buy_pri'\
                   ,'1sell_vol','1sell_pri','2sell_vol','2sell_pri','3sell_vol','3sell_pri'\
-                  ,'4sell_vol','4sell_pri','5sell_vol','5sell_pri']
+                  ,'4sell_vol','4sell_pri','5sell_vol','5sell_pri','id']
 SQL_TABLE_COL=['date','time','float','float','float','float',\
                'float','float','int','float','int','float',\
                'int','float','int','float','int','float','int','float',\
                'int','float','int','float','int','float',\
-               'int','float','int','float']
+               'int','float','int','float','int primary key auto_increment']
 DBCOL_DATE = 0
 DBCOL_TIME = 1
 DBCOL_OPEN_PRI = 2
@@ -42,7 +44,10 @@ DBCOL_SELL4_VOL = 26
 DBCOL_SELL4_PRI = 27
 DBCOL_SELL5_VOL = 28
 DBCOL_SELL5_PRI = 29
+DBCOL_AUTO_ID = 30
 
+OLD_TABLE_PREFIX="sid_"
+NEW_TABLE_PREFIX="stock_"
 #大盘数据： 指数名称，当前点数，当前价格，涨跌率，成交量（手），成交额（万元）
 
 #600、601开头上证A股
@@ -67,12 +72,16 @@ class BaseDB():
         self.conn=MySQLdb.connect(host="localhost",user="root",passwd="iamtaohui",db="stockdata")
         self.isConnected = True
         self.cursor = self.conn.cursor()  
+        self.tablePrefix = NEW_TABLE_PREFIX
         
     def close(self):
         if self.isConnected:
             self.conn.close()
             self.cursor.close()
             self.isConnected = False
+            
+    def setTablenamePrefix(self, prefix):
+        self.tablePrefix = prefix
         
     def __del__(self):
         self.close()
@@ -97,37 +106,86 @@ class stockDB(BaseDB):
             self.cursor.execute("""create database if not exists stockdata""")
         except:
             pass
+        insertCols = "("
+        for i in range(len(DBCOL_NAMELIST)-1):
+            insertCols += "%s,"%(DBCOL_NAMELIST[i])
         
+        self.insertCols = insertCols[0:-1]+')'
+              
         self.conn.select_db('stockdata');  
         self.cursor = self.conn.cursor()  
         
-    def createTable(self, tablename):
+    def createTable(self, id):
+        tablename = self.tablePrefix+id
         sqlcols = ""
         for i in range(len(DBCOL_NAMELIST)):
             sqlcols += "%s %s,"%(DBCOL_NAMELIST[i], SQL_TABLE_COL[i])
         sqlcols += "key(%s,%s)"%(DBCOL_NAMELIST[0],DBCOL_NAMELIST[1])
         createsql = "create table if not exists %s(%s) "%(tablename, sqlcols)
-        #print createsql
-        self.cursor.execute(createsql)
         
-    def dropTable(self, tablename):
+        try:
+            self.cursor.execute(createsql)
+        except Exception, e:
+            print "createsql",createsql,e
+        
+    def dropTable(self, id):
+        tablename = self.tablePrefix+id
         self.cursor.execute("drop table %s"%(tablename))
         self.conn.commit()
+        
+    def getLastDate(self, id):
+        count = self.getLineCount(id)
+        if count > 0:
+            sql = "select date,time from %s limit %d,%d"%(self.tablePrefix+id,count-1,count)
+            n = self.cursor.execute(sql)
+            row = self.cursor.fetchone()
+            d = str(row[0])+" "+str(row[1])
+            dd=datetime.datetime.strptime(d,'%Y-%m-%d %H:%M:%S')
+            return dd
+        
+        return None
+            
+    def getLineCount(self, id):
+        sql = "select count(*) from %s"%(self.tablePrefix+id)  
+        n = self.cursor.execute(sql)
+        row = self.cursor.fetchone()
+        #print "getLineCount id %s has %d rows"%(id, n),row
+        
+        return row[0]
     
+    def validate(self, items):
+        valid = True
+        for i in range(27):
+            if int(items[i+2]) == 0:
+                valid = False
+                print "Not valid data",items
+                break
+                
+        return valid
+            
     def insertStock(self, id, items):
-        insertStockSql = "insert into sid_%s"%id
-        sql = insertStockSql+''' values(\
+        if not self.validate(items):
+            return False
+        insertStockSql = "insert into %s"%(self.tablePrefix+id)
+
+        sql = insertStockSql+self.insertCols+''' values(\
 %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,%s,%s,%s,%s,%s\
 )'''        
 
-        n = self.cursor.execute(sql, items)
+        try:
+            n = self.cursor.execute(sql, items)
+        except Exception, e:
+            print insertStockSql
+            print e,sql
 
         self.conn.commit()
         
+        return True
+        
     def getAllData(self, id):
-        sql = "select * from sid_%s"%id    
+        sql = "select * from %s"%(self.tablePrefix+id)  
 
         try:
             count = self.cursor.execute(sql)
@@ -139,7 +197,7 @@ class stockDB(BaseDB):
         return rows     
     
     def getDayData(self, id,day):
-        sql = "select * from sid_%s where date='%s'"%(id,day)    
+        sql = "select * from %s where date='%s'"%(self.tablePrefix+id,day)    
         print sql
         try:
             count = self.cursor.execute(sql)
@@ -151,7 +209,7 @@ class stockDB(BaseDB):
         return rows   
        
     def getAllDate(self, id):
-        sql = "select distinct date from sid_%s"%id    
+        sql = "select distinct date from %s"%(self.tablePrefix+id)    
 
         try:
             count = self.cursor.execute(sql)
@@ -162,18 +220,79 @@ class stockDB(BaseDB):
 
         return rows
 
-if __name__ == "__main__":
+def moveData(old, new):
     dbobj = getStockIdDB()
     rows = dbobj.getAllSid()
 
     sdb = stockDB()
+    newdb = stockDB()
+    newdb.setTablenamePrefix(NEW_TABLE_PREFIX)
     for row in rows:
-        print row[0]
-        sdb.dropTable("sid_"+str(row[0]))
-        sdb.createTable("sid_"+str(row[0]))
+        id = str(row[0])
+        print id
+        #sdb.getLastDate(str(row[0]))
+        newdb.dropTable(id)
+        newdb.createTable(id)
+        lines = sdb.getAllData(id)
+        print len(lines)
+        lastDate = None
+        n = 0
+        newrows = []
+        recordDic = {}
+        for line in lines:
+            d = str(line[DBCOL_DATE])+" "+str(line[DBCOL_TIME])
+            dd=datetime.datetime.strptime(d,'%Y-%m-%d %H:%M:%S')
+            if lastDate == None:
+                pass
+            else:
+                if dd == lastDate:
+                    if not recordDic.has_key(dd):
+                        recordDic[dd] = 0
+                    else:
+                        recordDic[dd]+=1
+                    #print "Error:",dd,lastDate,n
+                elif dd < lastDate:
+                    print dd,lastData,"Error"
+                else:
+                    newrows.append(line)
+                    
+            lastDate = dd
+            n+=1
+            
+        print id, len(newrows),len(lines)
+        for k,v in recordDic.items():
+            if v > 0:
+                print k,v
+        
+        for newdata in newrows:        
+            newdb.insertStock(id, newdata)
+        #newdb.createTable(id)
+        
+def createAllTable():
+    a = getAllIdFromSina.sinaIdManage()
+    #a.initFromSinaHy()
+    a.initLocalData()
+    newdb = stockDB()
+    for id,v in a.allstockmap.items():
+
+        newdb.createTable(id)
+        count = newdb.getLineCount(id)
+        print id,count
+        
+if __name__ == "__main__":
+    dbobj = getStockIdDB()
+    rows = dbobj.getAllSid()
     
+    createAllTable()
+
+    for row in rows:
+        id = str(row[0])
+        
+        #newdb.dropTable(id)
+        
+
+
     
-    #
-#sinaApi.getInfoFromSina()
+
 
  

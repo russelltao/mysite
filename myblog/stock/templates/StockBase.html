@@ -61,31 +61,31 @@
    		</div>
     </nav>
     
-<div class="container">
-<div class="row">
-	<div id="main" class="col-md-10">
-		<div class="panel panel-default">
-			    <ul class="nav nav-tabs">
-	                  {% for sid,costprice,isActive,link in stocklist %}
-	                  
-	                  {% if isActive %}
-	                  <li class="active"><a href="{{ link }}">{{ sid }}</a></li>
-	                  {% else %}
-	                  <li><a href="{{ link }}">{{ sid }}</a></li>
-	                  {% endif %}
-	                   
-	                  {% endfor %}
-	             </ul>
-
-			<div class="panel-body">
-                   {% block main %}{% endblock %}
-             </div>
-        </div>
-	</div>
-    <div class="sidebar col-md-2">
-    	{% include "Sidebar.html" %}
-    </div>
-</div>
-</div>
+		<div class="container">
+		<div class="row">
+			<div id="main" class="col-md-10">
+				<div class="panel panel-default">
+					    <ul class="nav nav-tabs">
+			                  {% for sid,costprice,isActive,link in stocklist %}
+			                  
+			                  {% if isActive %}
+			                  <li class="active"><a href="{{ link }}">{{ sid }}</a></li>
+			                  {% else %}
+			                  <li><a href="{{ link }}">{{ sid }}</a></li>
+			                  {% endif %}
+			                   
+			                  {% endfor %}
+			             </ul>
+		
+					<div class="panel-body">
+		                   {% block main %}{% endblock %}
+		             </div>
+		        </div>
+			</div>
+		    <div class="sidebar col-md-2">
+		    	{% include "Sidebar.html" %}
+		    </div>
+		</div>
+		</div>
     </body>
 </html>

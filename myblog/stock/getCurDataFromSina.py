@@ -6,6 +6,7 @@ import datetime, time
 import common,csv
 import os
 from dbAPI import getStockIdDB,stockDB
+import getAllIdFromSina
 
 sinaStockCol=("股票名称", "今日开盘价", "昨日收盘价", "当前价格","今日最高价","今日最低价",\
 "竞买价","竞卖价","成交量","成交金额","买一成交量","买一成交价",\
@@ -262,6 +263,7 @@ class CollectSinaData():
     def __init__(self, intervalSec = 10):
         self.initSinaUrl = "http://hq.sinajs.cn/list="
         self.intervalSec = intervalSec
+        self.maxStockOnce = 860
 
         self.columns = ["time","curpri","vol","compbuy","compsell"]
         
@@ -273,12 +275,81 @@ class CollectSinaData():
             self.columns.append("%dbuyvol"%(i+1))
             self.columns.append("%dbpri"%(i+1))
             
+    def getOnceData(self, idlist, stockdb):
+        time1 = datetime.datetime.now()
+        result = []
+        if False == self.getData(idlist, result):
+            time.sleep(self.intervalSec)
+            return 0
+
+        n = 0
+        failCount = 0
+        notTodayCount = 0
+        sameLastTimeCount = 0
+        successCount = 0
+        for row in result:
+            id = idlist[n]
+            n+=1
+            
+            if row is None:
+                failCount+=1
+                continue
+
+            try:
+                thistime = datetime.datetime.strptime(row[0]+" "+row[1], '%Y-%m-%d %H:%M:%S')
+            except Exception,e:
+                print e,row,"len=",len(row)
+                failCount+=1
+                continue
+            
+            if self.lasttime.has_key(id):
+                #print dateTime, lastUpdateTime
+                if self.lasttime[id] == thistime:
+                    #print "same time as ",self.lasttime[id],id
+                    sameLastTimeCount += 1
+                    continue
+                #row[8] == row[8] - self.lastvol[id]
+                
+            if thistime.day != time1.day or time1.month != thistime.month:
+                #print thistime,"!=",time1
+                notTodayCount+=1
+            else:
+                successCount+=1
+                stockdb.insertStock(id, row)
+            #print id, row
+            
+        time2 = datetime.datetime.now()
+        print len(idlist),"cost:",time2-time1,"failCount:",failCount,"notTodayCount:",notTodayCount\
+        ,"sameLastTimeCount:",sameLastTimeCount,"successCount:",successCount
+        return successCount
+        
     def startLoop(self, idlist):
 
         filelist = {}
         csvlist = {}
-        lasttime = {}
-        lastvol = {}
+        self.lasttime = {}
+        self.lastvol = {}
+        
+        onceCount = 0
+        allIdList = []
+        onceIdList = []
+        stockdb = stockDB()
+        for id in idlist:
+            onceCount+=1
+            onceIdList.append(id)
+            lasttime = stockdb.getLastDate(id)
+            if lasttime != None:
+                self.lasttime[id] = lasttime
+            
+            if onceCount < self.maxStockOnce:
+                pass
+            else:
+                allIdList.append(onceIdList)
+                onceIdList = []
+                onceCount = 0
+              
+        allIdList.append(onceIdList)
+        
         while True:
             curTime = datetime.datetime.now()
             res = common.secToMarcketOpen(curTime) - 60
@@ -286,35 +357,20 @@ class CollectSinaData():
                 print "sleep secondes:",res
                 time.sleep(res)
                 continue
-        	
-            result = []
-            if False == self.getData(idlist, result):
-            	time.sleep(self.intervalSec)
-            	continue
-
-            n = 0
-            stockdb = stockDB()
-            print "len",len(result),len(idlist)
-            for row in result:
-                print n
-                id = idlist[n]
-                n+=1
-                
-                if row is None:
-                    print "get data error:",id
-                    continue
-
-                print id,"row=",row
-                
-                if lasttime.has_key(id):
-                    if lasttime[id] == row[1]:
-                        print "same time as ",lasttime[id],id
-                        continue
-                    row[2] == row[2] - lastvol[id]
-                    
-                stockdb.insertStock(id, row)
-                
-            time.sleep(self.intervalSec)
+            
+            time1 = datetime.datetime.now()
+            successCount = 0
+            for onceIds in allIdList:
+                successCount+=self.getOnceData(onceIds, stockdb)
+            time2 = datetime.datetime.now()
+            print "now:",time2,"cost:",time2-time1
+            
+            sleepSec = self.intervalSec
+            if successCount == 0:
+                if sleepSec < 60:
+                    print "All failed, sleep 1 minutes"
+                    sleepSec = 60
+            time.sleep(sleepSec)
         
     def parse(self, sid, oneData, realtimeData):
         #print "parse=",oneData    
@@ -326,11 +382,12 @@ class CollectSinaData():
             return False
         stockValues = stockResultArray[1].split(",")
         count=0
+        zeroFailCount = 0
         if len(stockValues) >= len(sinaStockCol):
             #print "stockValues[3]=", stockValues[3], type(stockValues[3])
 
             if stockValues[3] == "0.00" or stockValues[3] == "0.0":
-                print "error 2",stockValues
+                #print "error 2",stockValues
                 return False
             
             #date
@@ -342,6 +399,10 @@ class CollectSinaData():
             
             for i in range(27):
                 realtimeData.append(stockValues[3+i])
+                
+        else:
+            #print "parse",len(stockValues), ">=", len(sinaStockCol),stockValues
+            return False
             
         return True
     
@@ -362,10 +423,11 @@ class CollectSinaData():
             return False
         
         strResult = str(response.read())
-        print idList,strResult
+        print "idCount=%d,response=%d,request=%d"%(len(idList),len(strResult),len(sinaUrl))
     
         allDatas = strResult.split("\n")
         n = 0
+        failCount = 0
         for oneData in allDatas:
             if oneData == "":
                 break
@@ -377,13 +439,26 @@ class CollectSinaData():
                 resultTable.append(realtimeData)
             else:
                 resultTable.append(None)
+                failCount+=1
 
             n+=1
-            
+        #if failCount > 0:
+            #print "getData fail stock count:",failCount
         return True
 
+def getAllData():
+    a = getAllIdFromSina.sinaIdManage()
+    #a.initFromSinaHy()
+    a.initLocalData()
 
-if __name__ == "__main__":
+    sinaobj = CollectSinaData(6)
+    sids = []
+    for id,v in a.allstockmap.items():
+        sids.append(id)
+
+    res = sinaobj.startLoop(sids)
+
+def getMasterPetData():
     idDB = getStockIdDB()
     rows = idDB.getAllSid()
     idDB.close()
@@ -391,10 +466,13 @@ if __name__ == "__main__":
     for row in rows:
         sids.append(str(row[0]))
     print sids
-    sinaobj = CollectSinaData(6)
+    sinaobj = CollectSinaData(3)
     #sidList = ["300078","601808","600815","600835","000858","600005","600030","600062","600396","600469","600479","601111","601398","000027","000402","000777"]
     res = sinaobj.startLoop(sids)
     print "RESULT:",res
+    
+if __name__ == "__main__":
+    getAllData()
 
     
     

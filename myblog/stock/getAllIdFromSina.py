@@ -155,6 +155,8 @@ class sinaIdManage():
         
 if __name__ == '__main__':
     a = sinaIdManage()
-    a.initFromSinaHy()
-    #a.initLocalData()
+    #a.initFromSinaHy()
+    a.initLocalData()
+    for k,v in a.allstockmap.items():
+        print k,v
     
