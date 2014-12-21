@@ -326,7 +326,7 @@
                 }
 
                 var filteredData = [];
-                for (var i = startIndex; i <= toIndex && i < maxDataLength; i++) {
+                for (var i = startIndex; i <= toIndex && i < maxDataLength; i++) {       	
                     filteredData.push(this.data.ks[i]);
                 }
                 var high, low;
@@ -418,6 +418,7 @@
                     options.xAxis.scalerCount = filteredData.length;
                     stepLength = 1;
                 }
+
                 xScalers.push(convertDate(filteredData[0].quoteTime, false));
                 for (var i = 1; i < options.xAxis.scalerCount; i++) {
                     var index = Math.ceil(i * stepLength);
@@ -716,5 +717,3 @@
             painter.paint();
         }
         
-
-        window.onload = drawKL;

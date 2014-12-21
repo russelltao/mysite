@@ -1,0 +1,110 @@
+{% extends "StockBase.html" %}
+
+{% block title %}{{ videoname }} | {% endblock %}
+{% block keywords %}{{ keywords }}{% endblock %}
+
+{% block extend_style %} 
+<script src="/js/loading.js" type="text/javascript" charset="GBK"></script>
+<script src="/js/util.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/absPainter.js" type="text/javascript" charset="GBK"></script>
+<script src="/js/ajax.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/crossLines.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/axis-x.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/linepainter.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/volumePainter.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/axis-y.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/chartEventHelper.js?a" type="text/javascript" charset="GBK"></script>
+<script src="/js/tip.js" charset="GBK"></script>
+<script src="/js/controller.js" charset="GBK"></script>
+
+<script src="/js/DrawKL.js"></script>
+
+<script>
+var data = [
+{% for quoteTime,preClose,open,high,low,close,volume,amount in KLdatas %}
+[{{ quoteTime }},{{ preClose }},{{ open }},{{ high }},{{ low }},{{ close }},{{ volume }},{{ amount }}],
+{% endfor %}
+]
+function getKLData() {
+    var result = {};
+    var ks = [];
+    for (var i = 0; i < data.length; i++) {
+        var rawData = data[i];
+        //20111215,11.68,11.65,11.76,11.40,11.41,43356655,502325991
+        //����,����,���̼�,��,�ͣ���,������
+        var item = {
+            quoteTime: rawData[0],
+            preClose: rawData[1],
+            open: rawData[2],
+            high: rawData[3],
+            low: rawData[4],
+            close: rawData[5],
+            volume: rawData[6],
+            amount: rawData[7]
+        };
+        if (ks.length == 0) {
+            result.low = item.low;
+            result.high = item.high;
+        } else {
+            result.high = Math.max(result.high, item.high);
+            result.low = Math.min(result.low, item.low);
+        }
+        ks.push(item);
+    }
+    result.ks = ks;
+    return result;
+}
+window.onload = function() {
+	drawKL();
+}
+</script>
+{% endblock %}
+
+{% block main %} 
+
+<div class="row">
+			<ul class="nav nav-tabs">
+                  <li>
+						<div id="myDropdown" class="dropdown">
+						  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown">
+						    请选择复盘日期
+						    <span class="caret"></span>
+						  </button>
+						  <ul id="selectDay" class="dropdown-menu" role="menu" aria-labelledby="选择盘口数据的展示日期">
+							{% for day, url in pankouDays %}
+							<li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url }}">{{ day }}</a></li>
+							{% endfor %}
+						  </ul>
+						</div>
+                  </li>
+             </ul>
+</div>
+
+<div class="row">
+
+<div class="panel panel-default">
+	<div class="panel-body">
+
+
+
+
+		<div class="row">
+		    <canvas id="canvasKL" width="1002" height="460" style="z-index: 2; border: 1px solid #69c">
+		        <p>hey,您的浏览器不支持html5，换个浏览器吧，比如google chrome，firefox</p>
+		    </canvas>
+		</div>
+		<div class="row"><a href="{{ dailyurl }}">
+			<img src="{{dailyurl}}" class="img-responsive" alt="{{ dailyurl }}" />
+		</a></div>
+		<div class="row"><a href="{{ weekurl }}">
+			<img src="{{ weekurl }}" class="img-responsive" alt="{{ weekurl }}" />
+		</a></div>
+		<div class="row"><a href="{{ monthurl }}">
+			<img src="{{ monthurl }}" class="img-responsive" alt="{{ monthurl }}" />
+		</a></div>
+		</div>
+
+     </div>
+</div>
+
+{% endblock %}

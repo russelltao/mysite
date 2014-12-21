@@ -9,7 +9,10 @@ from myblog.settings import PAGE_NUM, RECENTLY_NUM, HOT_NUM, FIF_MIN
 from django.core.paginator import Paginator
 from django.db.models import Q
 #from duoshuo import DuoshuoAPI
-
+from django.http import HttpResponse
+from django.views.generic.base import TemplateView
+import baidupan
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +44,20 @@ class BaseMixin(object):
 
         return context
     
+def getBaiduList(request):
+    #print request.GET['path']
+    pan = baidupan.BaiduPan()
+    print "getBaiduList=",request.GET['path']
+    result = pan.listFolder(request.GET['path'], False)
+    #print json.dumps(result)
+    return HttpResponse(json.dumps(result))
+
+class ShareResourceView(TemplateView):
+    template_name = 'shareresource.html'
+    def get_context_data(self, **kwargs):
+        context = super(ShareResourceView, self).get_context_data(**kwargs)
+
+        return context
     
 class PostDetailView(BaseMixin, DetailView):
     object = None

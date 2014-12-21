@@ -11,10 +11,10 @@ from myblog.stock.ReadLocalData import *
 import myblog.stock.CreateDiagram as CreateDiagram
 from django.views.generic.base import TemplateView
 import getCurDataFromSina
-from myblog.stock.models import OwnerStocks
-import os
-import MySQLdb
-from dbAPI import getStockIdDB,stockDB
+from myblog.stock.models import Operations
+import os, datetime
+import MySQLdb,dbAPI,getAllIdFromSina
+import CalcTurnOverRatio
 
 logger = logging.getLogger(__name__)
 
@@ -31,127 +31,125 @@ class BaseStock(object):
         context = super(BaseStock, self).get_context_data(**kwargs)
         try:
             #logger.info(context['categories'])
-            owner = kwargs.get("owner")
-            if owner != '' and owner != None:
-                self.owner = owner
-            allbuyrows = OwnerStocks.objects.all()
-            ownerNav = []
-            ownerDict = {}
-            
-            for row in allbuyrows:
-                if ownerDict.has_key(row.owner):
-                    continue
-                else:
-                    ownerDict[row.owner] = True
-                    active = False
-                    if row.owner == self.owner:
-                        active = True
-                    ownerNav.append((row.owner,'/stocks/%s/'%(row.owner),''))
+            pass
+        except Exception as e:
+            logger.exception(u'加载基本信息出错[%s]！', e)
 
-                
-            context['owners'] = ownerNav
-            
-            self.allProcStocks = OwnerStocks.objects.filter(owner=self.owner)
+        return context
 
-            totalCost = 0  
-            self.listStocks = []
-            for row in self.allProcStocks:
-                totalCost += row.costPrice*row.stockCount
-                print "self.totalCost,",totalCost,"id=",row.stockId
-                self.listStocks.append(row)
-                    
-            context['TotalCost'] = totalCost
-            sid = kwargs.get("sid",None)
-            sinaId = stockIDforSina(sid)
+class OneStock(BaseStock):
+    def get_context_data(self, *args, **kwargs):
+        context = super(OneStock, self).get_context_data(**kwargs)
+        try:
+            #logger.info(context['categories'])
+            self.sid = self.request.GET.get('s')
+            if self.sid == None or self.sid == '':
+                return context
+            
+            sinaId = stockIDforSina(self.sid)
             context["dailyurl"]="http://image.sinajs.cn/newchart/daily/n/%s.gif"%(sinaId)
             context["minuteurl"]="http://image.sinajs.cn/newchart/min/n/%s.gif"%(sinaId)
             context["weekurl"]="http://image.sinajs.cn/newchart/weekly/n/%s.gif"%(sinaId)
             context["monthurl"]="http://image.sinajs.cn/newchart/monthly/n/%s.gif"%(sinaId)
-        
-            slist  = []
-            resultmap = self.get_all_cur_info(context)
-                
-            i = 0
-            for sitem in resultmap:
-                #print sitem
-                active = False
-                if sid == self.allProcStocks[i].stockId:
-                    active = True
-                slist.append((sitem[COL("股票名称")],self.allProcStocks[i].costPrice,active,\
-                              "/stock/%s/%s"%(self.owner,self.allProcStocks[i].stockId)))
-                i+=1
-            context['stocklist'] = slist
+            
+            sdb = dbAPI.stockDB()
+            
+            alldays = sdb.getAllDate(self.sid)
+            if len(alldays) == 0:
+                print "no data"
+                return context
+            showday = alldays[-1][0]
+            pankouDays = []
+            for row in alldays:
+                print "day:",row
+                pankouDays.append((row[0], '/stock/'+row[0].strftime('%Y%m%d')+"?s="+self.sid))
+            print "getAllDate",alldays,showday
+            context['pankouDays'] = pankouDays
         except Exception as e:
             logger.exception(u'加载基本信息出错[%s]！', e)
 
         return context
     
-    def get_all_cur_info(self, context):
-        sinaIds = []
-        for r in self.allProcStocks:
-            sinaIds.append(stockIDforSina(r.stockId))
-            print 'get_all_cur_info',r
+class StockKLView(OneStock, TemplateView):
+    template_name = "StockKL.html"
 
-        sinadata = getCurDataFromSina.sinaStockAPI()
-        resultmap = sinadata.getCurPriFromSina(sinaIds)
-        print len(resultmap)
+    def get_context_data(self, **kwargs):
+        context = super(StockKLView, self).get_context_data(**kwargs)
 
-        totalearning = 0
-        searnings = []
-        i = 0
-        for r in resultmap:
-            #print r
-            name = r[COL('股票名称')]       
-            curpri = float(r[COL('当前价格')])
-            stockCount = float(self.allProcStocks[i].stockCount)
-            initPri = float(self.allProcStocks[i].costPrice)
-            income = (curpri-initPri)*stockCount
-            searnings.append((name, initPri, curpri, stockCount, income, income>0))
-            totalearning+=income
-            #print 'currentpri',curpri,stockCount,income,initPri
-            i+=1
-            
-        context['allStocksIncome'] = searnings
-        context['totalincome'] = totalearning
-        context['isTotalEarn'] = totalearning>0
+        if not self.sid:
+            return context
         
-        return resultmap
-
+        KLdatas = []
+        hisData = ReadLocalData()
+        rows = hisData.getLocalData(self.sid)
+        for row in rows:
+            KLdata = [row[DATE_COL_DATE].strftime('%Y%m%d'),0,row[DATE_COL_OPEN],row[DATE_COL_HIGH],row[DATE_COL_LOW],row[DATE_COL_CLOSE],\
+                            row[DATE_COL_VOL], float(row[DATE_COL_CLOSE])*int(row[DATE_COL_VOL])]
+            KLdatas.append(KLdata)
+            #print 'KLdata',KLdata
+        context['KLdatas'] = KLdatas
+        
+        return context
     
-class StockDetailView(BaseStock, TemplateView):
+    
+class StockDetailView(OneStock, TemplateView):
     template_name = "StockDetail.html"
 
     def get_context_data(self, **kwargs):
         context = super(StockDetailView, self).get_context_data(**kwargs)
 
-        sid = kwargs.get("sid",None)
-        sdb = stockDB()
-        
-        alldays = sdb.getAllDate(sid)
-        if len(alldays) == 0:
-            print "no data"
+        showday = kwargs.get("day",None)
+
+        if showday == None or not self.sid:
             return context
-        showday = alldays[-1][0]
-        pankouDays = []
-        for row in alldays:
-            pankouDays.append(row[0])
-        print "getAllDate",alldays,showday
-        context['pankouDays'] = pankouDays
         
-        filename = 'pankou_%s_%s.jpg'%(sid, showday)
+        context['KLurl'] = 'http://taohui.org.cn/stockKL/?s='+self.sid
+        sdb = dbAPI.stockDB()
+        
+        filename = 'pankou_%s_%s.jpg'%(self.sid, showday)
         imgUrl = '/stockimage/'+filename
         imgLoc = "/mnt/myblog/stock/"+filename
         context['pankouVolUrl'] = imgUrl
         xAxisTitle = 'showday %s'%(showday)
         yAxisTitle = 'VOL'
-        #if os.path.exists(imgLoc):
-            #return context
-        
-        rows = sdb.getDayData(sid,showday)
 
+        rows = sdb.getDayData(self.sid, datetime.datetime.strptime(showday, '%Y%m%d').date())
+        if len(rows) == 0:
+            print len(rows),sid,showday[0:4],showday[4,2],showday[6,2]
+            return context
+
+        pankouDatas = []
         times = []
+        lastVol = rows[0][dbAPI.DBCOL_EXCH_VOL]
         for row in rows:
             times.append(str(row[1]))
+            
+            pline = [row[dbAPI.DBCOL_CUR_PRI],row[dbAPI.DBCOL_EXCH_VOL]-lastVol,\
+                     row[dbAPI.DBCOL_EXCH_AMOUNT],row[dbAPI.DBCOL_TIME],\
+                     row[dbAPI.DBCOL_COMP_BUY_PRI],row[dbAPI.DBCOL_COMP_SELL_PRI] ]
+            for i in range(20):
+                pline.append(row[10+i])
+            pankouDatas.append(pline)
+            lastVol = row[dbAPI.DBCOL_EXCH_VOL]
+            
+        idManager = getAllIdFromSina.sinaIdManage()
+        idManager.initLocalData()
+        print idManager.allstockmap[self.sid]
+                
+        context['pankouDatas'] = pankouDatas
+        context['dataLen'] = len(pankouDatas)
+        context['highest'] = rows[-1][dbAPI.DBCOL_HIGH_PRI]
+        context['lowest'] = rows[-1][dbAPI.DBCOL_LOW_PRI]
+        context['open'] = rows[-1][dbAPI.DBCOL_OPEN_PRI]
+        context['price'] = rows[-1][dbAPI.DBCOL_CUR_PRI]
+        context['day'] = rows[-1][dbAPI.DBCOL_DATE].strftime('%Y%m')
+        context['volume'] = rows[-1][dbAPI.DBCOL_EXCH_VOL]
+        context['amount'] = rows[-1][dbAPI.DBCOL_EXCH_AMOUNT]
+        
+        if os.path.exists(imgLoc):
+            print imgLoc,'picfile exist!'
+            return context
+            
         linenames = []
         for i in range(5):
             linenames.append("buy%d"%(i+1))
@@ -203,78 +201,136 @@ class StockDetailView(BaseStock, TemplateView):
     
 class EarningsOverView(BaseStock, TemplateView):
     template_name = "EarningOverview.html"
+    
+
+    def analysisTrade(self, alltrade, currdata, tabledata, detailinfo):
+        moneypool = 0
+        curcount = 0
+        stockId = None
+        
+        name = currdata[COL('股票名称')]
+        curpri = float(currdata[COL('当前价格')])
+        for trade in alltrade:
+            stockId = trade.stockId
+            cc = trade.costPrice*trade.stockCount
+            if trade.operation == 0:
+                #买入
+                moneypool -= cc
+                curcount += trade.stockCount
+            elif trade.operation == 1:
+                #卖出
+                moneypool += cc
+                curcount -= trade.stockCount
+            else:
+                print "error",trade.operation
+            
+        mycost = -moneypool
+        if curcount > 0:
+            moneypool += curpri*curcount
+        print moneypool
+
+        KLurl = '/stockKL?s='+stockId
+        sinaUrl = "http://vip.stock.finance.sina.com.cn/moneyflow/#!ssfx!"+stockIDforSina(stockId)
+        tableLine = [stockId, mycost, curcount, KLurl, sinaUrl, name, curpri, moneypool,\
+                           detailinfo[getAllIdFromSina.SCOL_PB],\
+                           "%.2f"%(float(detailinfo[getAllIdFromSina.SCOL_MKTCAP])/10000),\
+                           "%.2f"%(float(detailinfo[getAllIdFromSina.SCOL_NMC])/10000),\
+                           detailinfo[getAllIdFromSina.SCOL_PER],detailinfo[getAllIdFromSina.SCOL_TURNOVERRATIO]]
+        
+        tabledata.append(tableLine)
+        return (mycost, moneypool)
 
     def get_context_data(self, **kwargs):
-        context = super(EarningsOverView, self).get_context_data(**kwargs)
-        data = ReadLocalData()
+        try:
+            context = super(EarningsOverView, self).get_context_data(**kwargs)
 
-        sids = []
-        for ones in self.allProcStocks:
-            sids.append(ones.stockId)
+            allOperRows = Operations.objects.all()
+            ownerDict = {}
             
-        lastdays = kwargs.get("days", None)
-        if lastdays == None or lastdays == '':
-            lastdays = 150
-        else:
-            lastdays = int(lastdays)
+            sinaIds = []
+            for row in allOperRows:
+                if ownerDict.has_key(row.owner):
+                    if ownerDict[row.owner].has_key(row.stockId):
+                        ownerDict[row.owner][row.stockId].append(row)
+                    else:
+                        ownerDict[row.owner][row.stockId] = [row]
+                        sinaIds.append(stockIDforSina(row.stockId))
+                else:
+                    ownerDict[row.owner] = {row.stockId:[row]}
+                    sinaIds.append(stockIDforSina(row.stockId))
             
-        today = datetime.date.today()
-        fromday = today-datetime.timedelta(days=lastdays)
-        filename = 'earn_%s_%d_%s_to_%s.jpg'%(self.owner, lastdays, fromday, today)
-        imgUrl = '/stockimage/'+filename
-        imgLoc = "/mnt/myblog/stock/"+filename
-        context['earningHistoryUrl'] = imgUrl
-        xAxisTitle = 'from %s to %s'%(fromday, today)
-        yAxisTitle = 'RMB'
-        
+            sinadata = getCurDataFromSina.sinaStockAPI()
+            resultmap = sinadata.getCurPriFromSina(sinaIds)
+            realSinaData = {}
 
-        totalAssets = 0
-        allrows = []
-        procInfo = []
-        j = 0
-        for ones in sids:
-            rows = data.getLocalData(ones)
-            if len(rows) == 0:
-                print ones,"not exist"
-            else:
-                allrows.append(rows)
-                procInfo.append(self.allProcStocks[j])
-                print "stockCount",self.allProcStocks[j].stockCount,rows[0],rows[-1]
-                totalAssets += self.allProcStocks[j].stockCount*float(rows[-1][DATE_COL_CLOSE])
-            j+=1
-            
-        context['CurrentAssets'] = totalAssets
-        if os.path.exists(imgLoc):
-            return context
-        
-        allrowsInit = data.getSameData(allrows, fromday, today)
-        allrows = data.reduceData(allrowsInit)
-        print "allrows",len(allrows),len(allrowsInit)
-        
-        totalearningHistory = []
-        days = []
-        for rows in allrows:
-            i=0
-            totalearning = 0
-            for row in rows:
-                stockCount = float(procInfo[i].stockCount)
-                initPri = float(procInfo[i].costPrice)
-                curPri = float(row[DATE_COL_CLOSE])
-                income = (curPri-initPri)*stockCount
-                totalearning+=income
-                i+=1
+            for i in range(len(sinaIds)):
+                realSinaData[sinaIds[i]] = resultmap[i]
                 
-            totalearningHistory.append(totalearning)
-            days.append(str(rows[0][DATE_COL_DATE]))
-            #print "totalearning",totalearning,rows[0][DATE_COL_DATE]
+            allOwnerInfo = []
+            idManager = getAllIdFromSina.sinaIdManage()
+            idManager.initLocalData()
 
-        CreateDiagram.makeSymbolChart("earn", [totalearningHistory], days, ['totalearning'], \
-                                      imgLoc, xAxisTitle,yAxisTitle)
-        
-        for row in self.allProcStocks:
-            pass
-        
+            for owner, stockrows in ownerDict.items():
+                print owner
+                totalCost = 0  
+
+                i = 0
+                totalearning = 0
+                listTableDatas = []
+                for sid, onestock in stockrows.items():
+                    detailinfo = idManager.allstockmap[sid]
+                    thiscost,thisearning = self.analysisTrade(onestock, realSinaData[stockIDforSina(sid)], listTableDatas, detailinfo)
+                    totalCost += thiscost
+                    totalearning += thisearning
+      
+                allOwnerInfo.append([owner, listTableDatas, totalCost, totalearning])
+                    
+            context['allOwnerInfo'] = allOwnerInfo
+        except Exception as e:
+            logger.exception(u'加载基本信息出错[%s]！', e)
+            
         return context
     
+class TurnoverRatioView(BaseStock, TemplateView):
+    template_name = "TurnoverRate.html"
+
+    def get_context_data(self, **kwargs):
+        try:
+            context = super(TurnoverRatioView, self).get_context_data(**kwargs)
+            
+            idManager = getAllIdFromSina.sinaIdManage()
+            a = CalcTurnOverRatio.CalcTurnOverRate()
+            idManager = getAllIdFromSina.sinaIdManage()
+            idManager.initLocalData()
+            datas = a.getHighRate(idManager, 100)
+            slist = []
+            for line in datas:
+                stockId = line[CalcTurnOverRatio.RATE_COL_ID]
+                detailinfo = idManager.allstockmap[stockId]
+                
+                KLurl = '/stockKL?s='+stockId
+                sinaUrl = "http://vip.stock.finance.sina.com.cn/moneyflow/#!ssfx!"+stockIDforSina(stockId)
+                onedata = [stockId,KLurl,detailinfo[getAllIdFromSina.SCOL_NAME],sinaUrl]
+                onedata.append("%.2f"%(line[CalcTurnOverRatio.RATE_COL_LONGRATE]-line[CalcTurnOverRatio.RATE_COL_MIDRATE]))
+                onedata.append("%.2f"%((line[CalcTurnOverRatio.RATE_COL_1PRI]-line[CalcTurnOverRatio.RATE_COL_0PRI])/line[CalcTurnOverRatio.RATE_COL_0PRI]))
+                onedata.append("%.2f"%(line[CalcTurnOverRatio.RATE_COL_MIDRATE]-line[CalcTurnOverRatio.RATE_COL_SHORTRATE]))
+                onedata.append("%.2f"%((line[CalcTurnOverRatio.RATE_COL_2PRI]-line[CalcTurnOverRatio.RATE_COL_1PRI])/line[CalcTurnOverRatio.RATE_COL_1PRI]))
+                onedata.append("%.2f"%(line[CalcTurnOverRatio.RATE_COL_SHORTRATE]))
+                onedata.append("%.2f"%((line[CalcTurnOverRatio.RATE_COL_3PRI]-line[CalcTurnOverRatio.RATE_COL_2PRI])/line[CalcTurnOverRatio.RATE_COL_2PRI]))
+                onedata.append(detailinfo[getAllIdFromSina.SCOL_PB])
+                onedata.append("%.2f"%(float(detailinfo[getAllIdFromSina.SCOL_MKTCAP])/10000))
+                onedata.append("%.2f"%(float(detailinfo[getAllIdFromSina.SCOL_NMC])/10000))
+                onedata.append(detailinfo[getAllIdFromSina.SCOL_PER])
+                onedata.append(detailinfo[getAllIdFromSina.SCOL_TURNOVERRATIO])
+                
+                slist.append(onedata)
+                
+            context['listStocks'] = slist
+        except Exception as e:
+            logger.exception(u'加载基本信息出错[%s]！', e)
+            
+        return context
+    
+
     
     

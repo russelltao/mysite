@@ -1,0 +1,87 @@
+{% extends "mybase.html" %}
+{% load duoshuo_tags %}
+
+{% block title %} | {% endblock %}
+{% block desc %}{%  endblock %}
+{% block keywords %}{% endblock %}
+
+{% block extend_style %} 
+<link rel="stylesheet" href="/static/blog/css/jquery.treeview.css" />
+<script src="/static/blog/js/jquery-1.11.0.min.js"></script>
+<script src = "/static/blog/js/jquery.treeview.min.js" type = "text/javascript" ></script >
+<script src="/static/blog/js/jquery.treeview.async.js"></script> 
+<script type="text/javascript">
+function my_formatSize($size){
+    var size  = parseFloat($size);
+    var rank =0;
+    var rankchar ='Bytes';
+    while(size>1024){
+        size = size/1024;
+        rank++;
+    }
+    if(rank==1){
+        rankchar="KB";
+    }
+    else if(rank==2){
+        rankchar="MB";
+    }
+    else if(rank==3){
+        rankchar="GB";
+    }    
+    return size.toFixed(2)+ " "+ rankchar;
+}
+var branches;
+
+$(document).ready(function(){
+	
+	$("#browser").treeview({
+		animated:"slow",
+		collapsed:true,
+		control:"#sidetreecontrol",
+		toggle: function() {
+			if ($(this).attr('hasdata')=='1'){
+				console.log('exist');
+				return;
+			}
+
+			var exactpath = $(this).attr('path')
+			console.log(exactpath);
+			$.getJSON("/async/booklist/?path="+exactpath, function(result){
+				var newLitxt='';
+				var ulobj = document.getElementById(exactpath)
+				$.each(result, function(name, value){
+					newLitxt+='<li path="'+value.exactPath+'"';
+					if (value.isFolder == true){
+						newLitxt+=' class="closed"><span class="folder">'+name+'</span><ul id="'+value.exactPath+'"></ul></li>';
+					}else{
+						newLitxt+='><span class="file"><a href="/bookshare'+value.exactPath+'">'+name+'</a>  size:'+my_formatSize(value.size)+'</span></li>';
+					}
+			    });
+				branches = $(newLitxt).appendTo(ulobj);
+				$("#browser").treeview({
+					add: branches
+				});
+
+			});
+			$(this).attr('hasdata','1')
+		}
+	});
+});
+</script>
+{% load bootstrap3 %}
+{% bootstrap_javascript %}
+{% endblock %}
+
+{% block main %}
+<div>
+        <ul id="browser" class="filetree treeview-famfamfam">
+
+        <li class="closed" path='/'><span class="folder">全部资源</span>
+        <ul id='/'></ul>
+        </li>
+        
+        </ul>
+
+</div>
+
+{% endblock %}

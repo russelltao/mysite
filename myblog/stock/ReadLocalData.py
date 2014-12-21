@@ -8,19 +8,24 @@ class ReadLocalData():
     def __init__(self):
         self.today = datetime.datetime.now()
         
-    def getLocalData(self, sid):
+    def getLocalData(self, sid, mostDays=-1):
         datafolder = getLatestDataFolder()
         sfile=os.listdir(datafolder)
         rows = []
-        print "getLocalData",datafolder
+        #print "getLocalData",datafolder
         
         for ssfile in sfile:
             if ssfile[0:6] == sid:
-                print ssfile
+                #print ssfile
+                i = 0
                 reader = csv.reader(open(datafolder+'/'+ssfile, 'rb'))
                 for line in reader:
                     line[DATE_COL_DATE] = datetime.datetime.strptime(line[DATE_COL_DATE], "%Y-%m-%d").date()
-                    rows.insert(0, line)
+                    if mostDays == -1 or i < mostDays:
+                        rows.insert(0, line)
+                        i+=1
+                    else:
+                        break
 
         return rows
     

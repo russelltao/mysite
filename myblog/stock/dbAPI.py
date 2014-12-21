@@ -68,11 +68,16 @@ def stockIDforSina(id):
         return strId
 
 class BaseDB():
-    def __init__(self):
-        self.conn=MySQLdb.connect(host="localhost",user="root",passwd="iamtaohui",db="stockdata")
+    def __init__(self, dbname="stockdata"):
+        
+        self.tablePrefix = NEW_TABLE_PREFIX
+        self.db = dbname
+        self.connect()
+        
+    def connect(self):
+        self.conn=MySQLdb.connect(host="localhost",user="root",passwd="iamtaohui",db=self.db,unix_socket='/data/mysql/mysql.sock')
         self.isConnected = True
         self.cursor = self.conn.cursor()  
-        self.tablePrefix = NEW_TABLE_PREFIX
         
     def close(self):
         if self.isConnected:
@@ -124,9 +129,12 @@ class stockDB(BaseDB):
         createsql = "create table if not exists %s(%s) "%(tablename, sqlcols)
         
         try:
-            self.cursor.execute(createsql)
+            print self.cursor.execute(createsql)
         except Exception, e:
-            print "createsql",createsql,e
+            #print "createsql",createsql,e
+            return False
+        
+        return True
         
     def dropTable(self, id):
         tablename = self.tablePrefix+id
@@ -153,19 +161,8 @@ class stockDB(BaseDB):
         
         return row[0]
     
-    def validate(self, items):
-        valid = True
-        for i in range(27):
-            if int(items[i+2]) == 0:
-                valid = False
-                print "Not valid data",items
-                break
-                
-        return valid
-            
+     
     def insertStock(self, id, items):
-        if not self.validate(items):
-            return False
         insertStockSql = "insert into %s"%(self.tablePrefix+id)
 
         sql = insertStockSql+self.insertCols+''' values(\
@@ -179,6 +176,7 @@ class stockDB(BaseDB):
         except Exception, e:
             print insertStockSql
             print e,sql
+            return False
 
         self.conn.commit()
         
@@ -273,11 +271,13 @@ def createAllTable():
     #a.initFromSinaHy()
     a.initLocalData()
     newdb = stockDB()
+    newAdds = []
     for id,v in a.allstockmap.items():
 
-        newdb.createTable(id)
-        count = newdb.getLineCount(id)
-        print id,count
+        if newdb.createTable(id):
+            count = newdb.getLineCount(id)
+            newAdds.append(id)
+    print "createTable success:", newAdds
         
 if __name__ == "__main__":
     dbobj = getStockIdDB()

@@ -86,7 +86,7 @@ class sinaStockAPI():
         temp = check[0]
         city = 'sh'
         if len(temp) == 2:
-            print temp[0], temp[1]
+            #print temp[0], temp[1]
             if temp[0] == "s_sh000001":
                 city = 'sh'
             elif temp[0] == "s_sz399001":
@@ -161,7 +161,7 @@ class sinaStockAPI():
             sinaUrl += common.stockIDforSina(sid)
             sinaUrl += ","
   
-        print "request:",sinaUrl
+        #print "request:",sinaUrl
         req = urllib2.Request(sinaUrl)   
         try:    
             response = urllib2.urlopen(req)
@@ -287,6 +287,7 @@ class CollectSinaData():
         notTodayCount = 0
         sameLastTimeCount = 0
         successCount = 0
+        dbErrorCount = 0
         for row in result:
             id = idlist[n]
             n+=1
@@ -314,13 +315,17 @@ class CollectSinaData():
                 #print thistime,"!=",time1
                 notTodayCount+=1
             else:
-                successCount+=1
-                stockdb.insertStock(id, row)
+                self.lasttime[id] = thistime
+                
+                if not stockdb.insertStock(id, row):
+                    dbErrorCount+=1
+                else:
+                    successCount+=1
             #print id, row
             
         time2 = datetime.datetime.now()
         print len(idlist),"cost:",time2-time1,"failCount:",failCount,"notTodayCount:",notTodayCount\
-        ,"sameLastTimeCount:",sameLastTimeCount,"successCount:",successCount
+        ,"sameLastTimeCount:",sameLastTimeCount,"successCount:",successCount,"dbErrorCount:",dbErrorCount
         return successCount
         
     def startLoop(self, idlist):
@@ -333,6 +338,7 @@ class CollectSinaData():
         onceCount = 0
         allIdList = []
         onceIdList = []
+        print "start to get lasttime from db",datetime.datetime.now()
         stockdb = stockDB()
         for id in idlist:
             onceCount+=1
@@ -350,28 +356,45 @@ class CollectSinaData():
               
         allIdList.append(onceIdList)
         
+        print "start to loop",datetime.datetime.now()
         while True:
             curTime = datetime.datetime.now()
             res = common.secToMarcketOpen(curTime) - 60
             if res > 0:
                 print "sleep secondes:",res
+                stockdb.close()
                 time.sleep(res)
+                stockdb.connect()
                 continue
             
-            time1 = datetime.datetime.now()
             successCount = 0
             for onceIds in allIdList:
                 successCount+=self.getOnceData(onceIds, stockdb)
-            time2 = datetime.datetime.now()
-            print "now:",time2,"cost:",time2-time1
+                time.sleep(0.8)
             
             sleepSec = self.intervalSec
             if successCount == 0:
                 if sleepSec < 60:
                     print "All failed, sleep 1 minutes"
                     sleepSec = 60
-            time.sleep(sleepSec)
+            #time.sleep(sleepSec)
         
+    def validate(self, items):
+        if len(items) < 30:
+            return False
+        if items[3] == "0.00" or items[3] == "0.0":
+            #print "error 2",stockValues
+            return False
+
+        for i in range(26):
+            try:
+                if int(items[i+3]) == 0:
+                    return False
+            except:
+                pass
+
+        return True
+    
     def parse(self, sid, oneData, realtimeData):
         #print "parse=",oneData    
         check = re.findall(r'var hq_str_([^=]*)=\"(.*)\"', oneData)
@@ -386,7 +409,7 @@ class CollectSinaData():
         if len(stockValues) >= len(sinaStockCol):
             #print "stockValues[3]=", stockValues[3], type(stockValues[3])
 
-            if stockValues[3] == "0.00" or stockValues[3] == "0.0":
+            if not self.validate(stockValues):
                 #print "error 2",stockValues
                 return False
             
@@ -401,7 +424,7 @@ class CollectSinaData():
                 realtimeData.append(stockValues[3+i])
                 
         else:
-            #print "parse",len(stockValues), ">=", len(sinaStockCol),stockValues
+            print "parse",len(stockValues), ">=", len(sinaStockCol),stockValues
             return False
             
         return True
@@ -428,8 +451,15 @@ class CollectSinaData():
         allDatas = strResult.split("\n")
         n = 0
         failCount = 0
+        if len(idList) > len(allDatas):
+            print allDatas
+            print "idCount:%d, valueCount:%d"%(len(idList), len(allDatas))
+            return False
+        
         for oneData in allDatas:
             if oneData == "":
+                break
+            elif n >= len(idList):
                 break
 
             #print n, len(allDatas),oneData

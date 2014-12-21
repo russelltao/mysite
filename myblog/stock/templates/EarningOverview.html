@@ -15,20 +15,64 @@
 <script src="/js/axis-y.js?a" type="text/javascript" charset="GBK"></script>
 <script src="/js/chartEventHelper.js?a" type="text/javascript" charset="GBK"></script>
 
-<script src="/js/DrawPankou.js"></script>
-<script src="/js/mins-data.js"></script>
+<link href="/CSS/bootstrap-sortable.css" rel="stylesheet" media="screen">
+
 {% endblock %}
 
 {% block main %} 
+<div id="main">
+	<div class="panel panel-default">
 
-<div class="row">
-	<div>成本：{{ TotalCost }} 当前总资产： {{ CurrentAssets }}</div>
-	<canvas id="canvas" width="414" height="310" style="border:1px solid #c3c3c3;">Your browser does not support the canvas element.</canvas>
-	<div class="row"><a href="{{ earningHistoryUrl }}">
-		<img src="{{ earningHistoryUrl }}" class="img-responsive" alt="{{ earningHistoryUrl }}" />
-	</a></div>
+		<div class="panel-body">
+		{% for owner, listStocks, totalCost, totalearning in allOwnerInfo %}
+		
+			<div class="row">
+			<div>持有者：{{ owner }}</div>
+				<div>成本：{{ totalCost }} 盈利： {{ totalearning }}</div>
+				<table class="table table-striped table-hover sortable">
+				<thead>
+					
+					<tr>
+						<th>股票ID</th>
+						<th>股票名称</th>
+						<th>持有股数</th>
+						<th>成本价格</th>
+						<th>当前价格</th>
+						<th data-defaultsort="asc">收益</th>
+						<th>市净率</th>
+						<th>总市值(亿)</th>
+						<th>流通市值(亿)</th>
+						<th>市盈率</th>
+						<th>当时换手率</th>
+					</tr>
+
+				</thead>
+				<tbody>
+				{% for stockId, costPrice, stockCount, KLurl,sinaUrl, name, curpri, income,pb,mktcap,nmc,per,toratio in listStocks %}
+					<tr>
+					<td><a href="{{ KLurl }}">{{ stockId }}</a></td>
+					<td><a href="{{ sinaUrl }}">{{ name }}</a></td>
+					<td>{{ stockCount }}</td>
+					<td>{{ costPrice }}</td>
+					<td>{{ curpri }}</td>
+					<td>{{ income }}</td>
+					<td>{{ pb }}</td>
+					<td>{{ mktcap }}</td>
+					<td>{{ nmc }}</td>
+					<td>{{ per }}</td>
+					<td>{{ toratio }}</td>
+					</tr>
+				{% endfor %}
+            	</tbody>
+				</table>
+				<div class="row"><a href="{{ earningHistoryUrl }}">
+					<img src="{{ earningHistoryUrl }}" class="img-responsive" alt="{{ earningHistoryUrl }}" />
+				</a></div>
+			</div>
+		{% endfor %}
+		</div>
+	</div>
 </div>
-
-    <div id="debug"></div>
-
+<script src="/js/moment.min.js"></script>
+<script src="/js/bootstrap-sortable.js"></script>
 {% endblock %}

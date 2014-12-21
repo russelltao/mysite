@@ -1,14 +1,17 @@
 eclipse.preferences.version=1
 encoding//myblog/blog/admin.py=utf-8
+encoding//myblog/blog/baidupan.py=utf-8
 encoding//myblog/blog/middleware.py=utf-8
 encoding//myblog/blog/models.py=utf-8
 encoding//myblog/blog/templatetags/substring.py=utf-8
 encoding//myblog/blog/views.py=utf-8
 encoding//myblog/feeds.py=utf-8
 encoding//myblog/sitemap.py=utf-8
+encoding//myblog/stock/CalcTurnOverRatio.py=gbk
 encoding//myblog/stock/GetHistoryNetData.py=gbk
 encoding//myblog/stock/GetRealTimeData.py=gbk
 encoding//myblog/stock/ReadLocalData.py=utf-8
+encoding//myblog/stock/SinaStockDetail.py=gbk
 encoding//myblog/stock/common.py=gbk
 encoding//myblog/stock/dbAPI.py=gbk
 encoding//myblog/stock/getAllIdFromSina.py=gbk

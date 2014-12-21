@@ -1,10 +1,12 @@
 #coding=gbk
 import os,datetime,re,csv,time
+import logging
 
+gLogFolder = "/var/log/stock"
 
 globalTopFolder = "/mnt/data"
 
-gOrigDataFolder = globalTopFolder+"/original" 
+gOrigDataFolder = globalTopFolder+"/origin" 
 #gHyOriginalFolder = globalTopFolder+"/行业/新浪行业"
 gHgMiningFolder = globalTopFolder+"/hg" 
 gStockidFile = globalTopFolder+"/yahooStockIdList.txt"
@@ -92,21 +94,21 @@ def stockIDforYahoo(id):
         return strId
 
 def secToMarcketOpen(t):
-    marcketOpen = datetime.datetime(t.year, t.month, t.day, 9, 30, 0)
+    marcketOpen = datetime.datetime(t.year, t.month, t.day, 9, 29, 50)
     
     if isJiaoyiri(t) == True:
         if t < marcketOpen:
             return (marcketOpen-t).seconds
 
-        marcketHalfClose = datetime.datetime(t.year, t.month, t.day, 11, 30, 0)
+        marcketHalfClose = datetime.datetime(t.year, t.month, t.day, 11, 30, 10)
         if t < marcketHalfClose:
             return 0
 
-        marcketHalfOpen = datetime.datetime(t.year, t.month, t.day, 13, 0, 0)
+        marcketHalfOpen = datetime.datetime(t.year, t.month, t.day, 12, 59, 50)
         if t < marcketHalfOpen:
             return (marcketHalfOpen - t).seconds
 
-        marcketClose = datetime.datetime(t.year, t.month, t.day, 15, 0, 0)
+        marcketClose = datetime.datetime(t.year, t.month, t.day, 15, 0, 10)
         if t < marcketClose:
             return 0
 

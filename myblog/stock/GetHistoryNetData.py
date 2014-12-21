@@ -6,6 +6,8 @@ import csv
 import re
 from common import *
 from getAllIdFromSina import *
+import socket
+socket.setdefaulttimeout(3)
 
 #from pychartdir import *
 #from Tkinter import *  
@@ -23,7 +25,8 @@ class processYahooData():
         self.today = datetime.datetime.now()
 
         self.sinaIdManage = sinaIdManage()
-        self.sinaIdManage.initLocalData()  
+        
+        print "processYahooData",self.today
         
     def getMissingFromYahoo(self, storeFolder):
         tmpExistStock = {}
@@ -31,7 +34,7 @@ class processYahooData():
         
         if os.path.isdir(storeFolder): 
             sfile=os.listdir(storeFolder)
-            print sfile
+
             for ssfile in sfile:
                 if DPshzhongzhi==ssfile[0:-4] or DPszchenzhi==ssfile[0:-4] or DPhs300==ssfile[0:-4]:
                     continue
@@ -72,40 +75,53 @@ class processYahooData():
                     #print "not",subfix
                     notNeedUpdate += 1
                     continue
-                csvfilename = "%s/%s.csv"%(storeFolder,id)     
-                try:   
-                    urllib.urlretrieve(url,csvfilename,urlcallback)   
-                except IOError as e:
-                      print "get %s error. %s"%(url, e)
+                csvfilename = "%s/%s.csv"%(storeFolder,id)  
+                self.downloadFile(url,csvfilename,urlcallback) 
                 newAdd += 1   
-        
-
         
         t2 = datetime.datetime.now()
         print "getMissingFromYahoo cost time %s. keep:%d,add:%d,unavailable:%d"\
             %(t2-t1, keep, newAdd, notNeedUpdate)
         
         return True
-        
+    
+    def downloadFile(self, url, file, urlcb):
+        ret = False
+        for i in range(200):  
+            try:   
+                urllib.urlretrieve(url,file,urlcb)   
+                ret = True
+                break
+            except IOError as e:
+                print "get %s error. %s"%(url, e)
+                time.sleep(0.5)
+            
+        if not ret:
+            print "download %s failed!"%file    
+        return ret
+    
     def getDapanData(self, storeFolder):
         #get dapan data
         url = initYahooUrl + DPshzhongzhi
         csvfilename = "%s/%s.csv"%(storeFolder,DPshzhongzhi)
-        urllib.urlretrieve(url,csvfilename,urlcallback)   
-    
+        self.downloadFile(url,csvfilename,urlcallback)   
+            
         url = initYahooUrl + DPszchenzhi
         csvfilename = "%s/%s.csv"%(storeFolder,DPszchenzhi)
-        urllib.urlretrieve(url,csvfilename,urlcallback)   
+        self.downloadFile(url,csvfilename,urlcallback)   
         
         url = initYahooUrl + DPhs300
         csvfilename = "%s/%s.csv"%(storeFolder,DPhs300)
-        urllib.urlretrieve(url,csvfilename,urlcallback)   
+        self.downloadFile(url,csvfilename,urlcallback)   
                     
     def updateData(self, storeFolder):
         if os.path.isdir(storeFolder): 
             pass
         else:
+            print "storeFolder",storeFolder,"is not a dir"
             return False
+        
+        self.sinaIdManage.initLocalData()  
         
         sfile=os.listdir(storeFolder)
         
@@ -116,6 +132,9 @@ class processYahooData():
                 allfolders.append(datetime.datetime.strptime(ssfile, '%Y%m%d'))
                 
         newdays = sorted(allfolders)
+        if len(newdays) > 2:
+            for i in range(len(newdays)-2):
+                print "need delete",newdays[i]
         laststoreday = self.today
         if len(newdays) < 1:
             print "no initial data"
@@ -128,8 +147,9 @@ class processYahooData():
                 
                 if len(newdays) < 2:
                     print "last update day is today, nothing done"
-                    return
-                laststoreday = newdays[-2]            
+                    laststoreday = self.today
+                else:
+                    laststoreday = newdays[-2]            
             
         
         laststorefolder =  storeFolder + "/%.2d%.2d%.2d"%(laststoreday.year, laststoreday.month, laststoreday.day)
@@ -279,6 +299,10 @@ def getDayData(id):
             
 if __name__ == "__main__":     
     yahoo = processYahooData()
+    print "start to initFromSinaHy",datetime.datetime.now()
+    yahoo.sinaIdManage.initFromSinaHy()
+    print "initFromSinaHy",datetime.datetime.now()
     yahoo.updateData(gOrigDataFolder)
+    print "end",datetime.datetime.now()
 
 
