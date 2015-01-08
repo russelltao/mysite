@@ -19,12 +19,15 @@ class OwnerStocks(models.Model):
     
 class Operations(models.Model):
     stockId = models.CharField(max_length=20, verbose_name=u'股票代码')
+    
+    OPER_CHOICES = ((0, '买进'), (1, '卖出'))
 
     costPrice = models.FloatField(default=0, verbose_name=u'价格')
     stockCount = models.IntegerField(default=0, verbose_name=u'股数')
-    operation = models.IntegerField(default=0, verbose_name=u'操作：买0卖1')
-    time = models.DateTimeField(u'操作时间')
+    operation = models.IntegerField(default=0, verbose_name=u'操作：买0卖1', choices=OPER_CHOICES)
+    time = models.DateField(u'操作时间')
     owner = models.CharField(max_length=20, verbose_name=u'所有者', default=u'master')
+    info = models.CharField(max_length=100, verbose_name=u'备注', default=u'')
 
     def __unicode__(self):
         return self.stockId

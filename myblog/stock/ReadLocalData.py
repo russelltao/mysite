@@ -8,22 +8,30 @@ class ReadLocalData():
     def __init__(self):
         self.today = datetime.datetime.now()
         
-    def getLocalData(self, sid, mostDays=-1):
+    def getLocalData(self, sid=DPshzhongzhi, mostDays=-1, startDay=None):
         datafolder = getLatestDataFolder()
         sfile=os.listdir(datafolder)
         rows = []
-        #print "getLocalData",datafolder
+        print "getLocalData",datafolder
         
         for ssfile in sfile:
-            if ssfile[0:6] == sid:
-                #print ssfile
-                i = 0
+            #print sid,ssfile
+            if ssfile[0:len(sid)] == sid:
+
                 reader = csv.reader(open(datafolder+'/'+ssfile, 'rb'))
                 for line in reader:
-                    line[DATE_COL_DATE] = datetime.datetime.strptime(line[DATE_COL_DATE], "%Y-%m-%d").date()
-                    if mostDays == -1 or i < mostDays:
+                    try:
+                        line[DATE_COL_DATE] = datetime.datetime.strptime(line[DATE_COL_DATE], "%Y-%m-%d").date()
+                    except ValueError,e:
+                        print e,line[DATE_COL_DATE],line
+                        continue
+                    if mostDays == -1:
+                        if startDay == None:
+                            rows.insert(0, line)
+                        elif line[DATE_COL_DATE] >= startDay:
+                            rows.insert(0, line)
+                    elif i < mostDays:
                         rows.insert(0, line)
-                        i+=1
                     else:
                         break
 
@@ -80,10 +88,8 @@ class ReadLocalData():
             
 if __name__ == "__main__":     
     data = ReadLocalData()
-    sids = ['600815','600835','000858']
-    today = datetime.date.today()
-    fromday = today-datetime.timedelta(days=365)
-    data.getSameData(sids, fromday, today)
+    rows = data.getLocalData()
+    print "rows",len(rows)
     
         
         

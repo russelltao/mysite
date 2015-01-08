@@ -202,48 +202,179 @@ class StockDetailView(OneStock, TemplateView):
 class EarningsOverView(BaseStock, TemplateView):
     template_name = "EarningOverview.html"
     
+    def showFormat(self, t):
+        return "%d%.2d%.2d"%(t.year,t.month,t.day)
+    
+    def showDayInfo(self, hisrow, totalStockNum):
+        return "%s\n开盘：%s\n最高：%s\n最低：%s\n收盘：%s\n换手：%.2f"%\
+( hisrow[DATE_COL_DATE], hisrow[DATE_COL_OPEN], hisrow[DATE_COL_HIGH], hisrow[DATE_COL_LOW], hisrow[DATE_COL_CLOSE],100*float(hisrow[DATE_COL_VOL])/totalStockNum )
 
-    def analysisTrade(self, alltrade, currdata, tabledata, detailinfo):
+    def showCurDayInfo(self, currdata, totalStockNum):
+        return "%s\n开盘：%s\n最高：%s\n最低：%s\n收盘：%s\n换手：%.2f"%\
+( currdata[COL('日期')], currdata[COL('今日开盘价')], currdata[COL('今日最高价')], \
+  currdata[COL('今日最低价')], currdata[COL('当前价格')],100*float(currdata[COL('成交量')])/totalStockNum )
+
+    def analysisTrade(self, alltrade, currdata, tabledata, alreadyHolderDatas, detailinfo, shDapanDict):
         moneypool = 0
-        curcount = 0
-        stockId = None
+        curHoldCount = 0
         
+        stockId = alltrade[0].stockId
         name = currdata[COL('股票名称')]
-        curpri = float(currdata[COL('当前价格')])
-        for trade in alltrade:
-            stockId = trade.stockId
-            cc = trade.costPrice*trade.stockCount
-            if trade.operation == 0:
-                #买入
-                moneypool -= cc
-                curcount += trade.stockCount
-            elif trade.operation == 1:
-                #卖出
-                moneypool += cc
-                curcount -= trade.stockCount
-            else:
-                print "error",trade.operation
-            
-        mycost = -moneypool
-        if curcount > 0:
-            moneypool += curpri*curcount
-        print moneypool
-
         KLurl = '/stockKL?s='+stockId
         sinaUrl = "http://vip.stock.finance.sina.com.cn/moneyflow/#!ssfx!"+stockIDforSina(stockId)
-        tableLine = [stockId, mycost, curcount, KLurl, sinaUrl, name, curpri, moneypool,\
-                           detailinfo[getAllIdFromSina.SCOL_PB],\
-                           "%.2f"%(float(detailinfo[getAllIdFromSina.SCOL_MKTCAP])/10000),\
-                           "%.2f"%(float(detailinfo[getAllIdFromSina.SCOL_NMC])/10000),\
-                           detailinfo[getAllIdFromSina.SCOL_PER],detailinfo[getAllIdFromSina.SCOL_TURNOVERRATIO]]
         
-        tabledata.append(tableLine)
+        nextTime = datetime.datetime.strptime(currdata[COL('日期')],'%Y-%m-%d')
+        
+        op = '无操作'
+        kdataproc = ReadLocalData()
+        hisrows = kdataproc.getLocalData(stockId, -1, alltrade[0].time)
+        print 'hisrows=',len(hisrows)
+        newPrice = float(currdata[COL('当前价格')])
+        if newPrice == 0.0:
+            if len(hisrows) > 1:
+                newPrice = float(hisrows[-1][DATE_COL_CLOSE])
+            else:
+                print name
+                return (0,0)
+            
+        nextPrice = newPrice
+        
+        totalStockNum = 10000*detailinfo[getAllIdFromSina.SCOL_MKTCAP]/newPrice
+        currDayInfo = self.showCurDayInfo(currdata, totalStockNum)
+        for i in range(len(alltrade)):
+            trade = alltrade[i]
+            
+            curTime = trade.time
+            curPri = float(trade.costPrice)
+            stockCount = trade.stockCount
+            
+            cc = trade.costPrice*trade.stockCount
+            moneyIncrease = 0
+            if trade.operation == 0:
+                #买入
+                op = "买%d"%(trade.stockCount)
+                moneypool -= cc
+                curHoldCount += stockCount
+            elif trade.operation == 1:
+                #卖出
+                op = "卖%d"%(trade.stockCount)
+                moneypool += cc
+                curHoldCount -= stockCount
+                stockCount=-stockCount
+            else:
+                print "error",trade.operation
+                
+            
+            if i == len(alltrade)-1:
+                nextTime = datetime.datetime.strptime(currdata[COL('日期')],'%Y-%m-%d').date()
+                nextPrice = newPrice
+            else:
+                nextTime = alltrade[i+1].time
+                nextPrice = float(alltrade[i+1].costPrice)
+                
+            priIncreasePercent = 100*(nextPrice-curPri)/curPri
+            moneyIncrease = stockCount*(nextPrice-curPri)
+
+            curEarningInfo = ''
+            curEarn = 0
+            if curHoldCount == 0:
+                curEarningInfo = "若仍然持有，那么将盈利%d%%"%(priIncreasePercent)
+            else:
+                curEarn = moneyIncrease
+                curEarningInfo = "盈利%d%%"%(priIncreasePercent)
+            
+            print stockId,curTime,"curPri=",curPri,'nextPrice=',nextPrice,nextTime
+            hisHighPri,hisHighInfo = nextPrice,currDayInfo
+            hisHighVol,hisHighVolInfo = int(currdata[COL('成交量')]),currDayInfo
+            hisLowPri,hisLowInfo = nextPrice,currDayInfo
+
+            dayCount = 0
+            volSum = 0
+            nextDayInfo = currDayInfo
+            thisDayInfo = ''
+            dapanStrong,dapanWeak = 0,0
+            for i in range(len(hisrows)):
+                hisrow = hisrows[i]
+                histime = hisrow[DATE_COL_DATE]
+                if histime == nextTime:
+                    nextDayInfo = self.showDayInfo(hisrow, totalStockNum)
+                elif histime == curTime:
+                    thisDayInfo = self.showDayInfo(hisrow, totalStockNum)
+                    
+                if histime > curTime and histime < nextTime:
+                    dayCount+=1
+                    
+                    hisclosepri = float(hisrow[DATE_COL_CLOSE])
+                    hisopenpri = float(hisrow[DATE_COL_OPEN])
+                    hisvol = int(hisrow[DATE_COL_VOL])
+                    volSum+=hisvol
+                    if hisclosepri > hisHighPri:
+                        hisHighPri = hisclosepri
+                        hisHighInfo = self.showDayInfo(hisrow, totalStockNum)
+                    if hisclosepri < hisLowPri:
+                        hisLowPri = hisclosepri
+                        hisLowInfo = self.showDayInfo(hisrow, totalStockNum)
+                    if hisvol > hisHighVol:
+                        hisHighVol = hisvol
+                        hisHighVolInfo = self.showDayInfo(hisrow, totalStockNum)
+                        
+                    lastClosePri = float(hisrows[i-1][DATE_COL_CLOSE])
+                    #print hisrows[i-1][DATE_COL_DATE]
+                    if False== shDapanDict.has_key(hisrows[i-1][DATE_COL_DATE]):
+                        #print "dapan not find",hisrows[i-1][DATE_COL_DATE]
+                        continue
+                    if False== shDapanDict.has_key(hisrows[i][DATE_COL_DATE]):
+                        #print "dapan not find",hisrows[i][DATE_COL_DATE]
+                        continue
+                    lastSHClose = float(shDapanDict[hisrows[i-1][DATE_COL_DATE]][DATE_COL_CLOSE])
+                    thisSHClose = float(shDapanDict[hisrows[i][DATE_COL_DATE]][DATE_COL_CLOSE])
+
+                    if (thisSHClose-lastSHClose)/lastSHClose > (hisclosepri-lastClosePri)/lastClosePri:
+                        dapanStrong+=1
+                    else:
+                        dapanWeak+=1
+  
+                       
+            avgVol = 0 
+            avgTurnover = 0
+            if dayCount > 0:
+                avgVol = float(volSum)/dayCount
+                avgTurnover = 100*avgVol/totalStockNum
+                hisHighVolInfo+=("\n日均换手：%.2f"%(avgTurnover))
+            else:
+                print "get nothing:",stockId
+                
+            tableLine = [name, sinaUrl, self.showFormat(curTime), thisDayInfo,\
+                       trade.costPrice, op, "金额：%d"%(trade.costPrice*trade.stockCount),\
+                       curHoldCount, "持有金额：%d"%(trade.costPrice*curHoldCount), nextDayInfo,\
+                       nextPrice, curEarn, curEarningInfo, \
+                       "%.2f"%(hisHighPri), hisHighInfo,\
+                       "%.2f"%(hisLowPri), hisLowInfo,\
+                       "%.2f"%(100*hisHighVol/totalStockNum), hisHighVolInfo,\
+                       "%d/%d"%(dapanWeak,dapanStrong),
+                       trade.info]
+            tabledata.append(tableLine)
+        
+        if curHoldCount != 0:
+            moneypool += newPrice*curHoldCount
+            alreadyHolderDatas.append([stockId, KLurl, name, sinaUrl, \
+                        curHoldCount, moneypool, newPrice])
+            
+        mycost = -moneypool
+        
         return (mycost, moneypool)
 
     def get_context_data(self, **kwargs):
         try:
             context = super(EarningsOverView, self).get_context_data(**kwargs)
 
+            kdataproc = ReadLocalData()
+            shDapanRows = kdataproc.getLocalData(DPshzhongzhi)
+            shDapanDict = {}
+            print 'shDapanRows=',len(shDapanRows)
+            for row in shDapanRows:
+                shDapanDict[row[DATE_COL_DATE]]=row
+        
             allOperRows = Operations.objects.all()
             ownerDict = {}
             
@@ -265,25 +396,27 @@ class EarningsOverView(BaseStock, TemplateView):
 
             for i in range(len(sinaIds)):
                 realSinaData[sinaIds[i]] = resultmap[i]
-                
+            
             allOwnerInfo = []
             idManager = getAllIdFromSina.sinaIdManage()
             idManager.initLocalData()
 
             for owner, stockrows in ownerDict.items():
-                print owner
                 totalCost = 0  
 
                 i = 0
                 totalearning = 0
                 listTableDatas = []
+                alreadyHolderDatas = []
                 for sid, onestock in stockrows.items():
                     detailinfo = idManager.allstockmap[sid]
-                    thiscost,thisearning = self.analysisTrade(onestock, realSinaData[stockIDforSina(sid)], listTableDatas, detailinfo)
+                    sortdata = sorted(onestock,key = lambda x:x.time,reverse = False) 
+                    #print onestock,'--',sortdata
+                    thiscost,thisearning = self.analysisTrade(sortdata, realSinaData[stockIDforSina(sid)], listTableDatas, alreadyHolderDatas, detailinfo, shDapanDict)
                     totalCost += thiscost
                     totalearning += thisearning
       
-                allOwnerInfo.append([owner, listTableDatas, totalCost, totalearning])
+                allOwnerInfo.append([owner, listTableDatas,alreadyHolderDatas,totalCost, totalearning])
                     
             context['allOwnerInfo'] = allOwnerInfo
         except Exception as e:
