@@ -300,6 +300,7 @@ def getDayData(id):
 if __name__ == "__main__":     
     yahoo = processYahooData()
     print "start to initFromSinaHy",datetime.datetime.now()
+    yahoo.sinaIdManage.initLocalData()
     yahoo.sinaIdManage.initFromSinaHy()
     print "initFromSinaHy",datetime.datetime.now()
     yahoo.updateData(gOrigDataFolder)

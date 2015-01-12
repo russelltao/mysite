@@ -206,9 +206,10 @@ class sinaIdManage():
         
 if __name__ == '__main__':
     a = sinaIdManage()
-    a.initFromSinaHy()
+    
     a.initLocalData()
-    #print a.allstockmap['600898']
+    a.initFromSinaHy()
+    print len(a.sToHyMap), len(a.hyToSMap), len(a.hyNameList), len(a.allstockmap), 
     
     #for k,v in a.allstockmap.items():
         #print k,v

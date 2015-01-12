@@ -12,7 +12,7 @@ class ReadLocalData():
         datafolder = getLatestDataFolder()
         sfile=os.listdir(datafolder)
         rows = []
-        print "getLocalData",datafolder
+        #print "getLocalData",datafolder
         
         for ssfile in sfile:
             #print sid,ssfile

@@ -215,9 +215,8 @@ class EarningsOverView(BaseStock, TemplateView):
   currdata[COL('今日最低价')], currdata[COL('当前价格')],100*float(currdata[COL('成交量')])/totalStockNum )
 
     def analysisTrade(self, alltrade, currdata, tabledata, alreadyHolderDatas, detailinfo, shDapanDict):
-        moneypool = 0
-        curHoldCount = 0
-        
+        historyEarning, curCost,curHoldCount, curEarning = 0, 0, 0, 0
+
         stockId = alltrade[0].stockId
         name = currdata[COL('股票名称')]
         KLurl = '/stockKL?s='+stockId
@@ -234,8 +233,8 @@ class EarningsOverView(BaseStock, TemplateView):
             if len(hisrows) > 1:
                 newPrice = float(hisrows[-1][DATE_COL_CLOSE])
             else:
-                print name
-                return (0,0)
+                print name,"can't find new price and history record"
+                return (0,0,0)
             
         nextPrice = newPrice
         
@@ -253,17 +252,17 @@ class EarningsOverView(BaseStock, TemplateView):
             if trade.operation == 0:
                 #买入
                 op = "买%d"%(trade.stockCount)
-                moneypool -= cc
+                curCost += cc
                 curHoldCount += stockCount
             elif trade.operation == 1:
                 #卖出
                 op = "卖%d"%(trade.stockCount)
-                moneypool += cc
+                curCost -= cc
                 curHoldCount -= stockCount
                 stockCount=-stockCount
             else:
                 print "error",trade.operation
-                
+            print name, curCost,curHoldCount, curEarning, trade.stockCount,trade.operation
             
             if i == len(alltrade)-1:
                 nextTime = datetime.datetime.strptime(currdata[COL('日期')],'%Y-%m-%d').date()
@@ -283,7 +282,7 @@ class EarningsOverView(BaseStock, TemplateView):
                 curEarn = moneyIncrease
                 curEarningInfo = "盈利%d%%"%(priIncreasePercent)
             
-            print stockId,curTime,"curPri=",curPri,'nextPrice=',nextPrice,nextTime
+            #print stockId,curTime,"curPri=",curPri,'nextPrice=',nextPrice,nextTime
             hisHighPri,hisHighInfo = nextPrice,currDayInfo
             hisHighVol,hisHighVolInfo = int(currdata[COL('成交量')]),currDayInfo
             hisLowPri,hisLowInfo = nextPrice,currDayInfo
@@ -355,14 +354,19 @@ class EarningsOverView(BaseStock, TemplateView):
                        trade.info]
             tabledata.append(tableLine)
         
+        print name, curCost,curHoldCount, curEarning, historyEarning
         if curHoldCount != 0:
-            moneypool += newPrice*curHoldCount
+            curEarning = newPrice*curHoldCount - curCost
+
             alreadyHolderDatas.append([stockId, KLurl, name, sinaUrl, \
-                        curHoldCount, moneypool, newPrice])
+                        curHoldCount, curCost, curEarning, newPrice])
             
-        mycost = -moneypool
-        
-        return (mycost, moneypool)
+        else:
+            historyEarning = -curCost
+            curEarning = 0
+            curCost = 0
+        print name, curCost,curHoldCount, curEarning, historyEarning
+        return (curCost, curEarning, historyEarning)
 
     def get_context_data(self, **kwargs):
         try:
@@ -402,21 +406,24 @@ class EarningsOverView(BaseStock, TemplateView):
             idManager.initLocalData()
 
             for owner, stockrows in ownerDict.items():
-                totalCost = 0  
+                curCostTotal, curEarningTotal, historyEarningTotal = 0,0,0
 
                 i = 0
-                totalearning = 0
                 listTableDatas = []
                 alreadyHolderDatas = []
                 for sid, onestock in stockrows.items():
+                    if not sid in idManager.allstockmap:
+                        continue
                     detailinfo = idManager.allstockmap[sid]
                     sortdata = sorted(onestock,key = lambda x:x.time,reverse = False) 
                     #print onestock,'--',sortdata
-                    thiscost,thisearning = self.analysisTrade(sortdata, realSinaData[stockIDforSina(sid)], listTableDatas, alreadyHolderDatas, detailinfo, shDapanDict)
-                    totalCost += thiscost
-                    totalearning += thisearning
+                    curCost, curEarning, historyEarning = self.analysisTrade(sortdata, realSinaData[stockIDforSina(sid)], listTableDatas, alreadyHolderDatas, detailinfo, shDapanDict)
+                    curCostTotal += curCost
+                    curEarningTotal += curEarning
+                    historyEarningTotal += historyEarning
+                print owner,curCostTotal, curEarningTotal, historyEarningTotal
       
-                allOwnerInfo.append([owner, listTableDatas,alreadyHolderDatas,totalCost, totalearning])
+                allOwnerInfo.append([owner, listTableDatas,alreadyHolderDatas,curCostTotal, curEarningTotal, historyEarningTotal])
                     
             context['allOwnerInfo'] = allOwnerInfo
         except Exception as e:

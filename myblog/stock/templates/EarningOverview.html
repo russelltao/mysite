@@ -24,11 +24,17 @@
 	<div class="panel panel-default">
 <h>鼠标悬浮后有更详细信息！</h>
 		<div class="panel-body">
+		<ul class="nav nav-tabs" role="tablist" id="myTab">
 		{% for owner, listStocks, alreadyHolderDatas, totalCost, totalearning in allOwnerInfo %}
-		
+		<li role="presentation"><a href="#{{ owner }}" data-toggle="tab">{{ owner }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<div id="myTabContent" class="tab-content">
+		{% for owner, listStocks, alreadyHolderDatas, curCostTotal, curEarningTotal, historyEarningTotal in allOwnerInfo %}
+			<div class="tab-pane fade in active" id="{{ owner }}">
 			<div class="row">
-			<div>持有者：{{ owner }}</div>
-				<div>总投入：{{ totalCost }} 总盈利： {{ totalearning }} 当前投入： 当前盈利：</div>
+				<h1>当前投入：{{ curCostTotal }} 当前盈利： {{ curEarningTotal }} 历史盈利：{{ historyEarningTotal }}</h1>
 				<div>当前持有股票</div>
 				<table class="table table-striped table-hover sortable">
 				<thead>
@@ -37,13 +43,13 @@
 						<th>股票ID</th>
 						<th>股票名称</th>
 						<th>持有股</th>
-						<th data-defaultsort="asc">收益</th>
+						<th data-defaultsort="dsc">收益</th>
 						<th>当前价格</th>
 					</tr>
 
 				</thead>
 				<tbody>
-				{% for stockId, KLurl, name, sinaUrl,holdcount,curEarning,curPri in alreadyHolderDatas %}
+				{% for stockId, KLurl, name, sinaUrl,holdcount,curCost,curEarning,curPri in alreadyHolderDatas %}
 					<tr>
 					<td><a href="{{ KLurl }}">{{ stockId }}</a></td>
 					<td><a href="{{ sinaUrl }}">{{ name }}</a></td>
@@ -101,10 +107,17 @@
 					<img src="{{ earningHistoryUrl }}" class="img-responsive" alt="{{ earningHistoryUrl }}" />
 				</a></div>
 			</div>
+		</div>
 		{% endfor %}
+		
 		</div>
 	</div>
 </div>
 <script src="/js/moment.min.js"></script>
 <script src="/js/bootstrap-sortable.js"></script>
+<script>
+  $(function () {
+    $('#myTab a:last').tab('show')
+  })
+</script>
 {% endblock %}
