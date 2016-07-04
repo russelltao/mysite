@@ -113,7 +113,7 @@ ROOT_URLCONF = 'myblog.urls'
 
 WSGI_APPLICATION = 'myblog.wsgi.application'
 
-LOG_FILE = '/mnt/webLogs/myblog.log'
+LOG_FILE = '/var/log/myblog.log'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
