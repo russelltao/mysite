@@ -1,5 +1,5 @@
 from common import *
-from FinanceChart import *
+#from FinanceChart import *
 
 import csv,re,datetime
 

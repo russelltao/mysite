@@ -120,10 +120,10 @@ LOG_FILE = '/var/log/myblog.log'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'blog', 
-        'USER': 'root', # Not used with sqlite3.
-        'PASSWORD': 'iamtaohui', # Not used with sqlite3.
-        'HOST': '/data/mysql/mysql.sock', # Set to empty string for localhost. Not used with sqlite3.
+        'NAME': 'myblog', 
+        'USER': 'webUser', # Not used with sqlite3.
+        'PASSWORD': 'webPass', # Not used with sqlite3.
+        'HOST': '', # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '', # Set to empty string for default. Not used with sqlite3.
         'unix_socket' : '/data/mysql/mysql.sock',
     }
@@ -240,6 +240,6 @@ DUOSHUO_SECRET = 'bfd5ce8cc34ab82ad96ae6ade39f81a8'
 DUOSHUO_SHORT_NAME = 'taohui'
 
 DOMAIN = 'http://taohui.org.cn'
-DB_NAME = 'blog'
-DB_USER = 'root'
-DB_PWD = 'iamtaohui'
+DB_NAME = 'myblog'
+DB_USER = 'webUser'
+DB_PWD = 'webPass'
